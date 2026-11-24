@@ -1,0 +1,1794 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#11162b">
+<title>太空基地指挥官</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0d1022; --panel: #171c32; --raised: #1d243e; --edge: #303a57;
+  --text: #f1f3ff; --muted: #aab6d5; --lime: #daff8f; --cyan: #7aeae0;
+  --gold: #ffda8a; --purple: #c8b2ff; --rose: #ff9caa;
+  font-family: "Nunito", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at 11% 0%, #252343 0, transparent 40rem), var(--bg); color: var(--text); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--edge); border-radius: 11px; background: var(--raised); min-height: 42px; }
+button:not(:disabled):hover { filter: brightness(1.15); }
+button:disabled { cursor: default; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+button[aria-pressed="true"] { border-color: var(--cyan); }
+[hidden] { display: none !important; }
+.wrap { width: min(1280px, calc(100% - 56px)); margin-inline: auto; }
+.top { border-bottom: 1px solid #282e47; background: #13172be8; }
+.top-inner { min-height: 71px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; white-space: nowrap; font-size: 17px; font-weight: 850; }
+.brand-emblem { width: 38px; height: 38px; display: grid; place-items: center; font-size: 24px; color: #171a32; background: var(--lime); border-radius: 11px; }
+.top-actions, .action-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.top-actions button, .action-row button { padding: 0 13px; }
+.top-actions .archive { color: var(--purple); }
+.top-actions .sound-toggle { width: 42px; padding: 0; font-size: 17px; line-height: 1; }
+.sound-toggle[aria-pressed="false"] { color: var(--muted); }
+main { padding: 26px 0 40px; }
+.intro { position: relative; isolation: isolate; display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 27px 28px 25px; border-radius: 19px; overflow: hidden; border: 1px solid #454265; background: radial-gradient(ellipse at 77% 85%, #384478, transparent 50%), linear-gradient(110deg,#242442,#23223d 55%,#181b37); }
+.intro::before { content: ""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(circle, #ffffffa8 1px, transparent 1.5px) 4px 17px / 89px 67px, radial-gradient(circle, #b7c5ff80 1px, transparent 1.4px) 11px 4px / 137px 53px; opacity: .55; mask-image: linear-gradient(90deg, transparent 12%, black 57%); }
+.planet { --p-light: #c8c3ff; --p-mid: #686bb7; --p-dark: #262c64; width: clamp(155px, 30vw, 370px); aspect-ratio: 1; position: absolute; right: 9%; top: -65%; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse at 58% 35%, #24284652 0 9%, transparent 10%), radial-gradient(ellipse at 37% 56%, #20254d57 0 4.5%, #bbbaff4d 5%, transparent 6.5%), radial-gradient(ellipse at 32% 28%, #939bd45a 0 6%, transparent 7%), radial-gradient(circle at 34% 23%, var(--p-light), var(--p-mid) 38%,var(--p-dark) 68%, #252749 80%); box-shadow: 0 0 42px #9ea4ff29, inset 0 0 8px #c0c1fc50; opacity: .88; }
+.planet::after { content: ""; position: absolute; inset: 33% -20%; border-radius: 50%; border: 1px solid #d9d2ff80; transform: rotate(-25deg); box-shadow: 0 0 0 7px #b3aaff1b; }
+.eyebrow { color: var(--lime); font-size: 12px; font-weight: 800; letter-spacing: .12em; display: flex; align-items: center; gap: 8px; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
+h1, h2, h3, p { margin: 0; }
+h1 { margin-top: 5px; font-size: clamp(30px, 4vw, 49px); line-height: 1.14; letter-spacing: -.03em; font-weight: 900; text-shadow: 0 2px 16px #0d1022; }
+.intro p { margin-top: 10px; color: #e0e3ff; line-height: 1.55; }
+.progress-pill { display: flex; align-items: center; align-self: start; gap: 7px; white-space: nowrap; padding: 8px 11px; background: #12162ddd; border: 1px solid #63658c; border-radius: 9px; font-size: 13px; font-weight: 800; }
+.progress-pill strong { color: var(--gold); }
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 14px 0; }
+.stat { min-width: 0; display: flex; align-items: center; gap: 11px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--edge); border-radius: 13px; }
+.stat-mark { background: var(--raised); border: 1px solid var(--edge); border-radius: 9px; display: grid; place-items: center; flex: 0 0 35px; height: 35px; color: var(--tint); font-size: 20px; font-weight: 900; }
+.stat-data { flex: 1; min-width: 0; }
+.stat small { display: block; color: var(--muted); font-size: 12px; }
+.stat b { font-size: 21px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat b span { font-size: 12px; color: var(--muted); }
+.meter { display: block; width: min(100%,135px); margin-top: 3px; height: 3px; background: #2f3750; border-radius: 8px; overflow: hidden; }
+.meter > i { display: block; width: 100%; height: 100%; background: var(--tint); transition: width .2s; }
+.desk { display: grid; grid-template-columns: minmax(0,1fr) 306px; gap: 14px; align-items: start; }
+.panel { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; min-width: 0; }
+.board-panel { overflow: hidden; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 10px 15px; }
+.bar h2, .gear h2 { font-size: 16px; font-weight: 850; }
+.live-state { color: var(--cyan); background: #1d343e; border: 1px solid #34515a; border-radius: 6px; font-size: 12px; padding: 3px 8px; white-space: nowrap; }
+.field { isolation: isolate; position: relative; aspect-ratio: 800 / 436; background: #161d39; overflow: hidden; }
+.field.dust::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(156deg,#f9a26862, #ac5a302b 65%, #120e2340); }
+.field canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.board-control, .map-tag { position: absolute; transform: translate(-50%,-50%); z-index: 2; }
+.board-control { --unit: clamp(35px,4.7vw,56px); width: var(--unit); min-height: var(--unit); padding: 0; border-radius: 13px; border: 1px dashed #b9c9ff84; background: #172041af; color: #e1e8ff; display: grid; place-items: center; font-weight: 900; font-size: clamp(16px, 2.4vw, 27px); box-shadow: 0 4px 0 #10162d88; touch-action: manipulation; }
+.board-control.is-ready { border-color: #b9eac19e; background: #253852d9; color: var(--lime); }
+.board-control.placed { border-style: solid; border-color: var(--bot); color: var(--bot); background: #15203eef; }
+.board-control[aria-pressed="true"] { outline: 2px solid var(--lime); outline-offset: 3px; }
+.board-control.sun-empty::after, .board-control.shade-empty::after { content: "☀"; font-size: 10px; position: absolute; top: 1px; right: 4px; color: var(--gold); }
+.board-control.shade-empty::after { content: "◐"; color: var(--purple); }
+.board-control .pad-zone { position: absolute; top: 2px; left: 4px; font-size: 9px; line-height: 1; color: var(--zone-color); }
+.bot-level { position: absolute; bottom: -5px; right: -5px; border: 1px solid var(--bot); color: var(--bot); border-radius: 4px; padding-inline: 3px; background: #141d37; font-size: 9px; }
+.scan-pin { border: 1px solid #e3cfff; border-radius: 50%; background: #624c97; color: white; box-shadow: 0 0 0 5px #c8a2ff28, 0 0 20px #c8a2ff7a; }
+.scan-pin.found { background: #245548; color: var(--lime); border-color: var(--lime); box-shadow: 0 0 0 4px #a7ffac28; }
+.map-tag { pointer-events: none; z-index: 1; color: #fff2f0; font-size: clamp(9px,1.1vw,12px); font-weight: 850; text-align: center; white-space: nowrap; padding: 3px 6px; background: #181932de; border: 1px solid #a36e87; border-radius: 6px; }
+.map-tag.base { border-color: #69c7c6; color: #cbfff4; }
+.board-foot { padding: 9px 14px 12px; }
+.board-foot p { line-height: 1.5; min-height: 2.9em; display: flex; align-items: center; font-size: 13px; color: #dee5fd; }
+.secondary { color: var(--muted); }
+.wide { flex: 1; min-width: 128px; }
+.primary { background: var(--lime); color: #1c2822; border-color: #ecffc2; font-weight: 900; }
+.primary:disabled { opacity: .65; }
+.mini { font-size: 13px; }
+.side { display: grid; gap: 12px; }
+.gear { padding: 13px; }
+.gear-heading { display: flex; justify-content: space-between; gap: 5px; align-items: center; margin-bottom: 9px; }
+.gear-heading small { color: var(--muted); font-size: 11px; }
+.plan { padding: 12px 14px; border-bottom: 1px solid var(--edge); }
+.plan-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px 12px; align-items: baseline; margin-bottom: 7px; }
+.plan-head h3 { font-size: 14px; }
+.plan-head b { font-size: 12px; color: var(--gold); }
+.plan-zones { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
+.plan-zone { min-width: 0; border: 1px solid var(--edge); border-top: 2px solid var(--zone-color); border-radius: 7px; padding: 5px 7px 6px; background: #151a2f; }
+.plan-zone h4 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; margin: 0 0 3px; font-size: 12px; color: var(--zone-color); }
+.plan-zone h4 small { color: var(--muted); font-size: 10px; }
+.plan-zone p { font-size: 11px; line-height: 1.45; }
+.plan-zone p + p { margin-top: 3px; }
+.plan-zone p small { color: var(--muted); font-size: 10px; }
+.plan-zone .met { color: var(--cyan); }
+.plan-zone .short { color: var(--rose); }
+.plan-note { margin-top: 5px; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.launch-form { display: grid; gap: 9px; margin-top: 12px; }
+.launch-warning { padding: 10px 12px; border: 1px solid #a75970; border-radius: 9px; background: #41283a; color: #ffd3dd; }
+.launch-form input { width: 100%; min-height: 43px; padding: 6px 10px; border-radius: 8px; border: 1px solid #7380a4; background: #11172d; color: var(--text); font: inherit; }
+.launch-feedback { min-height: 1.5em; color: var(--gold); }
+.build-list { display: grid; gap: 6px; }
+.build-card { display: grid; grid-template-columns: 35px minmax(0,1fr) auto; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 6px 8px; border-color: #384360; min-height: 48px; }
+.build-card[aria-pressed="true"] { background: #28364e; }
+.build-card:disabled { opacity: .54; }
+.build-card.unaffordable:not(:disabled) .cost { color: #baa6a9; }
+.unit-mark { display: grid; place-items: center; border-radius: 8px; width: 33px; height: 33px; background: #131b33; color: var(--bot); font-size: 22px; font-weight: 900; }
+.build-name { display: block; font-weight: 850; font-size: 13px; }
+.build-card small { display: block; margin-top: 1px; color: #bdc7e3; font-size: 11px; }
+.cost { color: var(--gold); font-size: 12px; font-weight: 850; white-space: nowrap; }
+.manage { margin-top: 9px; border-top: 1px solid var(--edge); padding-top: 8px; }
+.manage p { font-size: 12px; line-height: 1.55; margin-bottom: 6px; }
+.manage .action-row button { font-size: 11px; padding-inline: 7px; min-height: 32px; }
+.manage button:disabled { opacity: .5; }
+.research { padding: 12px; border-color: #50446f; background: radial-gradient(ellipse at 100% 5%, #442e5b, transparent 70%), #251f3d; }
+.research button { display: grid; width: 100%; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; padding: 0; border: 0; background: transparent; text-align: left; }
+.research .unit-mark { color: var(--purple); background: #42325f; }
+.research strong { display: block; font-size: 14px; color: #f0e8ff; }
+.research small { display: block; color: #cfc0e9; font-size: 12px; margin-top: 2px; }
+.research .chev { color: var(--purple); font-size: 20px; padding-right: 4px; }
+.route { margin-top: 19px; padding: 15px; }
+.route-header { display: flex; align-items: baseline; justify-content: space-between; gap: 9px; margin-bottom: 11px; }
+.route h2 { font-size: 17px; }
+.route-header small { color: var(--muted); font-size: 12px; }
+.chapters { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
+.chapter { border: 1px solid var(--edge); border-radius: 10px; padding: 8px; min-width: 0; }
+.chapter.current { border-color: #6b9584; background: #1d2c38; }
+.chapter h3 { font-size: 12px; color: var(--mark); margin-bottom: 6px; }
+.chapter-levels { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; }
+.chapter-levels button { background: #242e4a; min-height: 36px; padding: 2px 0; font-size: 12px; font-weight: 850; border-radius: 7px; }
+.chapter-levels button:disabled { opacity: .55; }
+.chapter-levels button[aria-current="step"] { color: #1a2b2b; border-color: var(--lime); background: var(--lime); }
+.chapter-levels small { display: block; color: var(--gold); font-size: 8px; line-height: 1.1; min-height: 9px; }
+.chapter-levels button[aria-current="step"] small { color: #364b34; }
+dialog { width: min(480px,calc(100% - 26px)); max-height: 90vh; max-height: 90dvh; border: 1px solid #646590; border-radius: 19px; padding: 21px; color: var(--text); background: #1a2039; box-shadow: 0 24px 100px #060a1cbd; }
+dialog::backdrop { background: #090d1fc8; backdrop-filter: blur(4px); }
+.dialog-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 12px; }
+.dialog-head h2 { font-size: 22px; }
+.close { min-width: 38px; min-height: 38px; padding: 0; font-size: 20px; }
+.dialog-body { color: #d5def7; font-size: 14px; line-height: 1.6; }
+.dialog-body p + p { margin-top: 8px; }
+.dialog-body h3 { color: var(--text); margin: 10px 0 5px; font-size: 15px; }
+.dialog-body ol { padding-left: 22px; }
+.dialog-body li + li { margin-top: 5px; }
+.dialog-body a { color: var(--cyan); }
+.dialog-body .action-row { margin-top: 14px; }
+.answers { display: grid; gap: 6px; margin: 8px 0; }
+.answers button { text-align: left; padding: 6px 10px; }
+.answers button.correct { border-color: var(--lime); color: var(--lime); }
+.answers button.try-again { border-color: var(--rose); }
+.reveal { background: #151b31; padding: 11px; border: 1px solid var(--edge); border-radius: 9px; }
+.reveal > a { display: inline-block; margin-top: 5px; }
+.stars { color: var(--gold); font-size: 31px; letter-spacing: .1em; }
+.logbook { display: grid; gap: 6px; margin-top: 12px; }
+.logbook details { border: 1px solid var(--edge); border-radius: 8px; padding: 6px 9px; }
+.logbook details p { padding: 4px 0; }
+.logbook summary { cursor: pointer; color: var(--purple); }
+@media (max-width: 1020px) {
+  .wrap { width: calc(100% - 32px); }
+  .desk { grid-template-columns: minmax(0,1fr) 250px; }
+}
+@media (max-width: 740px) {
+  .wrap { width: calc(100% - 20px); }
+  .top-inner { min-height: 58px; gap: 5px; }
+  .brand { gap: 6px; font-size: 14px; }
+  .brand-emblem { width: 29px; height: 29px; font-size: 18px; }
+  .top-actions { gap: 4px; }
+  .top-actions button { min-height: 36px; font-size: 12px; padding-inline: 7px; }
+  .top-actions .sound-toggle { width: 34px; font-size: 16px; }
+  main { padding-top: 12px; }
+  .intro { padding: 14px; gap: 7px; align-items: start; }
+  .intro p { font-size: 12px; margin-top: 6px; }
+  .progress-pill { padding: 4px 6px; font-size: 11px; }
+  .planet { top: -30%; right: 2%; }
+  .stats { margin: 8px 0; gap: 4px; }
+  .stat { padding: 6px; gap: 5px; }
+  .stat-mark { flex-basis: 22px; height: 25px; font-size: 14px; }
+  .stat small { font-size: 10px; }
+  .stat b { font-size: 15px; }
+  .desk { grid-template-columns: 1fr; gap: 8px; }
+  .side { gap: 8px; }
+  .gear { padding: 8px; }
+  .gear-heading { margin-bottom: 6px; }
+  .build-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; }
+  .build-card { padding: 4px; gap: 5px; grid-template-columns: 26px minmax(0,1fr) auto; }
+  .build-card .unit-mark { width: 25px; height: 27px; font-size: 18px; }
+  .build-card small { font-size: 10px; }
+  .build-name, .cost { font-size: 11px; }
+  .research { padding: 8px; }
+  .chapters { grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); }
+  .board-foot { padding: 6px; }
+  .board-foot p { font-size: 12px; }
+  .board-foot .action-row { gap: 4px; }
+  .board-foot button { padding-inline: 7px; }
+  .board-foot .wide { min-width: 105px; }
+  .bar { min-height: 38px; padding: 5px 8px; }
+  .plan { padding: 7px; }
+  .plan-zone { padding-inline: 4px; }
+  .map-tag:not(.base) { transform: translate(-30%,-50%); }
+  .map-tag.base { transform: translate(-70%,-50%); }
+}
+@media (max-width: 365px) {
+  .board-control { --unit: 31px; }
+  .brand { font-size: 13px; }
+  .top-actions button { padding-inline: 5px; }
+  .top-actions .sound-toggle { width: 30px; }
+  .stat small { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand"><span class="brand-emblem" aria-hidden="true">✦</span> 太空基地指挥官</div>
+    <nav class="top-actions" aria-label="游戏菜单">
+      <button id="help" type="button">玩法</button>
+      <button id="jump" type="button">关卡</button>
+      <button id="archive" class="archive" type="button">发现图鉴</button>
+      <button id="sound-toggle" class="sound-toggle" type="button" aria-label="游戏声音" aria-pressed="true" title="关闭游戏声音" hidden>🔊</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <section class="intro" aria-labelledby="mission-title">
+    <div class="planet" id="planet" aria-hidden="true"></div>
+    <div>
+      <div class="eyebrow" id="sector">月球前哨 · 第 01 关</div>
+      <h1 id="mission-title">月面初登陆</h1>
+      <p id="briefing">把机器人放到碎石航道旁，守住刚刚建好的月球基地。</p>
+    </div>
+    <div class="progress-pill"><strong aria-hidden="true">★</strong><span id="total-progress">0 / 60 星</span></div>
+  </section>
+  <section class="stats" aria-label="基地状态">
+    <div class="stat" style="--tint:var(--gold)"><span class="stat-mark" aria-hidden="true">ϟ</span><div class="stat-data"><small>可用能量</small><b id="energy">100</b></div></div>
+    <div class="stat" style="--tint:var(--cyan)"><span class="stat-mark" aria-hidden="true">⬡</span><div class="stat-data"><small>基地护盾</small><b id="shield">100</b><span class="meter" aria-hidden="true"><i id="shield-meter"></i></span></div></div>
+    <div class="stat" style="--tint:var(--purple)"><span class="stat-mark" aria-hidden="true">≋</span><div class="stat-data"><small>已完成波次</small><b id="wave">0 <span>/ 2</span></b><span class="meter" aria-hidden="true"><i id="wave-meter"></i></span></div></div>
+  </section>
+  <div class="desk">
+    <section class="panel board-panel" aria-labelledby="map-title">
+      <header class="bar"><h2 id="map-title">基地地图</h2><span class="live-state" id="phase">布置时间</span></header>
+      <div class="field" id="field">
+        <canvas id="map" width="800" height="436" aria-hidden="true"></canvas>
+        <div id="map-controls"></div>
+      </div>
+      <section id="plan" class="plan" aria-labelledby="plan-title">
+        <div class="plan-head"><h3 id="plan-title">第 1 波布防</h3><b id="impact-plan"></b></div>
+        <div id="plan-zones" class="plan-zones"></div>
+        <p class="plan-note" id="plan-budget"></p>
+      </section>
+      <div class="board-foot">
+        <p id="message" aria-live="polite">先选择激光机器人，再点地图上带「＋」的位置。</p>
+        <div class="action-row">
+          <button class="primary wide" type="button" id="start">核算能量并出发</button>
+          <button type="button" id="speed" class="mini" aria-label="慢速节奏" aria-pressed="false">正常节奏</button>
+          <button type="button" id="repair" class="mini">修复 · 25 能量</button>
+          <button type="button" id="restart" class="mini secondary">重开</button>
+        </div>
+      </div>
+    </section>
+    <aside class="side" aria-label="指挥工具">
+      <section class="panel gear">
+        <div class="gear-heading"><h2>机器人工坊</h2><small id="build-slots"></small></div>
+        <div class="build-list" id="build-list"></div>
+        <div class="manage" id="manage" hidden>
+          <p id="manage-label"></p>
+          <div class="action-row">
+            <button id="upgrade" type="button">升级</button>
+            <button id="recycle" type="button">回收</button>
+          </div>
+        </div>
+      </section>
+      <section class="panel research">
+        <button type="button" id="scan">
+          <span class="unit-mark" aria-hidden="true">✧</span>
+          <span><strong id="scan-title">扫描地图上的发现点</strong><small id="scan-subtitle">答对可得 25 能量</small></span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+      </section>
+    </aside>
+  </div>
+  <section class="panel route" id="route" aria-labelledby="route-title">
+    <div class="route-header"><h2 id="route-title">探索航线</h2><small id="route-progress">已通关 0 / 20</small></div>
+    <div class="chapters" id="chapters"></div>
+  </section>
+</main>
+<dialog id="popup" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h2 id="dialog-title"></h2><button class="close" id="close" type="button" aria-label="关闭">×</button></div>
+  <div class="dialog-body" id="dialog-body"></div>
+</dialog>
+<script id="missions" type="application/json">
+[
+  {"name":"月面初登陆","brief":"把机器人放到碎石航道旁，守住刚刚建好的月球基地。","tip":"各放一台激光机器人到 A、B 航段。第 2 波的目标会换到 A、C，点已有机器人就能搬过去。","point":"环形山样本","clue":"看看环形山的边缘，外面有一圈被撞击抛出去的岩石。月面周围的气体极少，小天体比较容易直接撞上月面。","question":"月球上许多圆坑是怎么来的？","choices":["风一直吹","小天体撞击","大片海水退去"],"correct":1,"fact":"小天体高速撞上月面，会把岩石和尘土抛出去，留下圆形的撞击坑。","source":"moon","energy":100,"waves":["oooo","ooooro"]},
+  {"name":"追着阳光建基地","brief":"带上太阳能机器人，在阳光下为基地充电。","tip":"本关每波至少发电 12。阳光位置产 12，月影位置只产 3，把太阳能机器人放在带「☀」的位置。","point":"太阳能试验板","clue":"把试验板从岩石阴影推到太阳下，读数立刻升高。","question":"哪里适合摆太阳能机器人？","choices":["有阳光的空地","深坑的阴影里","盖上毯子的地方"],"correct":0,"fact":"太阳能电池能把光能变成电能。摆放位置和遮挡会影响收到的光。","source":"clipper","rule":"shade","energy":115,"waves":["ooorro","rororoo"]},
+  {"name":"月影冻土","brief":"扫描永久阴影，再用减速机器人拖住快速碎片。","tip":"冰冻机器人遇到快速碎片时，火力是 2 + 4。普通碎石交给激光机器人，别把两台都放到同一段。","point":"永久阴影坑","clue":"月球南极有些深坑底部常年见不到阳光。探测器在那里找到了水冰。","question":"哪里更可能长久保存月面水冰？","choices":["晒得最久的坡顶","任何地方都一样","常年晒不到太阳的深坑"],"correct":2,"fact":"月球极区的一些深坑非常冷。水冰进入这些冷阱后，就可能保存很长时间。","source":"moonWeather","rule":"shade","energy":125,"waves":["orrorro","ooorrrro","roroorrr"]},
+  {"name":"背面中继站","brief":"保护中继站，让月球背面的研究数据能传回地球。","tip":"外壳碎石会让激光火力减 1。比较两台低级机器人相加，或一台升级后的火力。","point":"背面天线","clue":"月球总以大致同一面朝向地球。背面地面上的天线和地球之间隔着整个月球。","question":"怎样把月球背面的数据传回地球？","choices":["让声音直接穿过太空","让中继器接收并转发信号","让天线转向地下"],"correct":1,"fact":"把中继器布置在合适的位置，能同时收到月球背面的信号，并把它转发给地球。","source":"relay","rule":"shade","energy":177,"waves":["oorrorho","orrhoohr","hrohrroo"]},
+  {"name":"红色登陆区","brief":"抵达火星，先检测红土，再保护采样舱。","tip":"先算每段需要几格火力，再决定升级还是多造一台。升级也会增加 1 格启动费。","point":"红色土壤","clue":"仔细看样本，土里有氧化铁，颜色很像自行车上锈掉的螺丝。","question":"火星为什么看起来发红？","choices":["尘土里有氧化铁","火星表面一直在燃烧","天空有一层红玻璃"],"correct":0,"fact":"火星土壤里含铁的矿物氧化后形成红色尘土，所以火星常被叫做红色星球。","source":"mars","energy":194,"waves":["roroohr","hroorrhr","hrrorrhh"]},
+  {"name":"尘暴来袭","brief":"第二波会卷起尘暴，先存能量，再迎接碎片。","tip":"晴天太阳能机器人每波产 12。第 2 波尘暴会减少 6，布防表会显示实际产量。","point":"尘暴里的光度计","clue":"天空逐渐变暗，试验板的读数也在下降。悬浮的尘土挡住了一部分阳光。","question":"尘暴来了，太阳能机器人通常会怎样？","choices":["发的电变多","发的电不变","发的电变少"],"correct":2,"fact":"火星尘暴能挡住阳光。落在太阳能板上的尘土也会让板子收到的光变少。","source":"dust","rule":"dust","energy":180,"waves":["roorrhor","rrhrohrr","hrrhorhrh"]},
+  {"name":"奥林匹斯山脚","brief":"绕过高地，让机器人从多个方向覆盖长航道。","tip":"开波前先看本波的来袭航段。后一波会换路线，优先移动手头的机器人。","point":"火山高度图","clue":"轨道探测结果显示，奥林匹斯山比地球上最高的山还高，山体是由一层层熔岩积起来的。","question":"奥林匹斯山是什么？","choices":["一座巨大的火山","一块火星冰盖","火星的一颗卫星"],"correct":0,"fact":"奥林匹斯山是太阳系最大的火山。它坡度较缓、面积广大，像一面扣在地上的盾。","source":"mars","energy":150,"waves":["orrhrohr","hhorrhrr","hrhrohrhh"]},
+  {"name":"火卫一掠影","brief":"火卫一从头顶掠过，雷达发现一批更快的碎片。","tip":"这一关的快速碎片需要 7 点火力，一级冰冻的 2 + 4 还差 1。升级或让另一台帮忙。","point":"火卫一轨道","clue":"这颗外形像土豆的小天体绕着火星跑。火星有两个这样的天然伙伴。","question":"火卫一围绕哪颗行星运动？","choices":["地球","火星","土星"],"correct":1,"fact":"火卫一和火卫二是火星的两颗天然卫星。火卫一更大，也离火星更近。","source":"mars","rule":"fast","energy":155,"waves":["rrhrohrr","rhrrhhrr","hrhrrhrhr"]},
+  {"name":"小行星航道","brief":"迎接成团碎片，启用可以同时拦截多块的脉冲机器人。","tip":"脉冲机器人拦外壳的火力是 5 + 3。对快速碎片只有 5，可以交给别的航段。","point":"小行星轨道图","clue":"打开轨道图，能看到许多小行星在火星和木星之间绕着太阳运动。","question":"主小行星带在什么地方？","choices":["地球和月球之间","太阳表面","火星和木星之间"],"correct":2,"fact":"大多数已知小行星在火星与木星之间的主小行星带里绕太阳运行。","source":"asteroid","energy":165,"waves":["ooohrrhoo","hrooohhrr","oohhroorhh"]},
+  {"name":"会长尾巴的彗星","brief":"抓住彗星靠近太阳的机会，扫描它变亮的尾巴。","tip":"每波的拦截航段会换位置。先找外壳碎石在哪两段，再决定哪台机器人要升级。","point":"两条彗尾","clue":"彗星靠近太阳后，冰开始变成气体，释放出尘埃，拉出尾巴。","question":"彗星靠近太阳时为什么容易长出尾巴？","choices":["被太阳加热，放出气体和尘埃","遇到了太空中的大雨","表面长出了羽毛"],"correct":0,"fact":"太阳加热彗核，释放气体和尘埃。太阳风和阳光会把它们推开，形成彗尾。","source":"rocks","energy":201,"waves":["rooorrhho","orrhhoorh","hrorrhhrho"]},
+  {"name":"流星来信","brief":"沿着光迹辨认碎片，守住地球观测转发站。","tip":"预测冲击是漏掉的碎片数乘以每块的冲击，再把各段加起来。试试把这波降到 0。","point":"一闪而过的光迹","clue":"一颗小石粒高速冲入地球大气，夜空里出现了一条亮线。","question":"我们看到的那条亮线叫什么？","choices":["卫星","流星","陨石坑"],"correct":1,"fact":"流星是小天体进入大气层时产生的发光现象。到达地面的剩余碎块叫陨石。","source":"meteors","rule":"fast","energy":170,"waves":["orrorhrhr","rrhhrrhro","hrrhrhhrhr"]},
+  {"name":"谷神星采样","brief":"重型碎石进入矿区，给拐角上的机器人留出升级能量。","tip":"巨石要 12 点火力。两台一级脉冲拦巨石是 8 + 8，比较它们在哪一段最有用。","point":"谷神星的亮斑","clue":"谷神星是主小行星带中最大的天体。黎明号进入过它的轨道并研究那些醒目的亮斑。","question":"谷神星位于哪里？","choices":["主小行星带","土星的光环里","地球大气层里"],"correct":0,"fact":"谷神星是主小行星带中的矮行星。黎明号曾绕它飞行，观测到含盐物质形成的亮斑。","source":"ceres","energy":175,"waves":["horhhorror","hrrhhohrr","hhrohrrhhb"]},
+  {"name":"冰壳下的海洋","brief":"登陆木卫二，在冰原上部署探测器和护航机器人。","tip":"冰原的三个航段都有信标。把擅长对付快速和外壳的机器人分开，下一波再重新组合。","point":"木卫二冰裂缝","clue":"冰壳裂缝纵横。磁场等观测结果让科学家怀疑，冰下藏着能导电的咸水。","question":"科学家认为木卫二冰壳下面可能有什么？","choices":["一片森林","一片咸水海洋","一个空气层"],"correct":1,"fact":"多种证据表明木卫二的冰壳下可能有液态盐水海洋。科学家还在研究它的深度和成分。","source":"europa","energy":175,"waves":["rrhohrrho","hrohhrrhh","brrhhrohh"]},
+  {"name":"是谁拽动冰层","brief":"调查冰原的拉伸痕迹，对付一波特别快的碎片。","tip":"快速碎片需要 7 点火力。二级冰冻可以给快速碎片 8 点，想想它要去哪一段。","point":"潮汐形变仪","clue":"木卫二绕木星转时，距离会有变化。木星的引力时强时弱，让冰壳被反复拉伸。","question":"什么会反复拉伸木卫二？","choices":["木星的引力","地球上的海浪","探测器的车轮"],"correct":0,"fact":"木星造成的潮汐作用会让木卫二反复形变。形变产生的热可能帮助维持冰下海洋。","source":"europa","rule":"fast","energy":182,"waves":["rrhhorrrh","hrhrrhrhh","hrrbhrrhh"]},
+  {"name":"穿越辐射带","brief":"为观测数据建保护舱，顶住连续冲来的外壳碎石。","tip":"这关外壳需要 8 点火力。一级脉冲刚好够，遇到巨石时别忘记再加一台。","point":"辐射监测器","clue":"木星强大的磁场会困住许多带电粒子。探测器要给电子设备加上保护。","question":"探测器该怎样保护敏感电子设备？","choices":["把设备挂到外面","用一盏灯照亮设备","把设备放进有厚壁的保护舱"],"correct":2,"fact":"木星的辐射带会损伤电子设备。欧罗巴快船用厚壁保护舱为敏感设备减少辐射影响。","source":"radiation","rule":"armor","energy":188,"waves":["hhoorrhhr","hhrrhhrrh","bhhrrhhrh"]},
+  {"name":"冰喷泉信号","brief":"前往土卫二扫描冰喷泉，在最后一波拦住巨石。","tip":"巨石一次会冲掉 42 护盾。先找巨石的航段，再决定把哪两台移到一起。","point":"土卫二喷泉","clue":"飞船从喷出的物质旁边掠过，发现里面有水蒸气和细小的冰粒。","question":"土卫二南极的喷泉会喷出什么？","choices":["水蒸气和冰粒","熔化的铁块","发光的沙子"],"correct":0,"fact":"土卫二南极的裂缝会把水蒸气和冰粒喷入太空，其中一部分物质形成土星的 E 环。","source":"enceladus","energy":190,"waves":["hrrorhhrr","rhhbhrror","hrrhhbrhb"]},
+  {"name":"借行星引力转弯","brief":"护送补给飞船借力转向，小心航道上的快速碎片。","tip":"注意下一波的三段目标。工位有限，升级能在同一个位置提升 2 点火力。","point":"飞船轨迹图","clue":"飞船恰好从一颗正在运动的行星旁掠过。引力使飞行方向改变，也能改变飞船相对太阳的速度。","question":"飞船怎样利用引力辅助？","choices":["在太空展开降落伞","按计划从行星旁掠过","完全关掉导航随机漂流"],"correct":1,"fact":"设计合适的掠过路线，飞船可以利用行星的引力改变方向或速度，节省一部分燃料。","source":"gravity","rule":"fast","energy":248,"waves":["rrhrrhohr","rhrrbhrrh","hrrhbrhhrb"]},
+  {"name":"越远越暗","brief":"飞向深空，太阳能产量降低，用好开局的补给。","tip":"深空里一级太阳能机器人每波只产 6，本关至少要发 6。算完它的启动费也要给拦截留能量。","point":"深空光度计","clue":"和地球附近相比，远处每一小块太阳能板收到的阳光更少。","question":"离太阳越来越远，同样大的太阳能板通常会怎样？","choices":["收到的太阳光变少","收到的太阳光变多","总是收到同样多的太阳光"],"correct":0,"fact":"离太阳越远，阳光分散到的面积越大。远航任务可能需要更大的太阳能板，或使用其他能源。","source":"voyager","rule":"dim","energy":249,"waves":["hrhhorrhh","bhrrhhrhr","hrrhbhrrhb"]},
+  {"name":"等一封太空回信","brief":"保护长距离天线，等观测信号安全传回地球。","tip":"第一波要顾到三个航段。先给巨石分火力，再用冰冻和激光补另外两段。","point":"信号往返计时器","clue":"你的讯息以光速走向远处的飞船，回信也要沿着这段距离走回来。","question":"飞船越远，收到它回信要等多久？","choices":["时间更短","立刻收到","时间更长"],"correct":2,"fact":"无线电波和光在真空中的速度一样。飞船越远，信号往返的时间就越长。","source":"signal","rule":"dim","energy":296,"waves":["hrorhhrrhb","rrhbhrrhhr","bhrhhhrhbh"]},
+  {"name":"太阳风边界","brief":"最后的巨石群已逼近。守住基地，把边界观测传回地球。","tip":"最后一波的巨石可能分到不同航段。对照每段的目标，比较把两台合在一起和拆开升级的结果。","point":"旅行者边界观测","clue":"太阳一直把带电粒子向外吹。到了很远的地方，这股太阳风与来自恒星之间的物质相遇。","question":"探测器越过太阳风形成的边界后，进入哪里？","choices":["地球的大气层","星际空间","太阳内部"],"correct":1,"fact":"旅行者探测器越过日球层顶后进入星际空间。它们离太阳很远，仍在向地球发送观测数据。","source":"heliosphere","rule":"dim","energy":289,"waves":["rrhrrhhrhb","bhrrhhrhhb","bhrrbhhhrh"]}
+]
+</script>
+<script>
+"use strict";
+
+const WIDTH = 800;
+const HEIGHT = 436;
+const SCAN_REWARD = 25;
+const REPAIR_COST = 25;
+const WAVE_ALLOWANCE = 32;
+const STORE_KEY = "space-base-commander-v1";
+const byId = (id) => document.getElementById(id);
+const missions = JSON.parse(byId("missions").textContent);
+const zones = [
+  { code:"A", name:"前段", edge:300, gate:223, color:"#9dc2ff" },
+  { code:"B", name:"中段", edge:560, gate:478, color:"#e3b6ff" },
+  { code:"C", name:"后段", edge:800, gate:688, color:"#83e8d7" }
+];
+// 工位上限、启动后最低能量、发电目标、逐波冲击上限、逐波碎石分配（循环）。
+const strategyRules = [
+  [2,2,0,  [0,0],     ["AB","AC"]],
+  [2,8,12, [0,0],     ["B","C"]],
+  [3,8,0,  [0,0,0],   ["ABBABBA","CCCAAAAC","BCBCCBBB"]],
+  [3,10,0, [24,0,0],  ["AB","B","BC"]],
+  [3,12,0, [15,0,12], ["AC","B","AC"]],
+  [4,12,6, [15,12,0], ["B","AC","B"]],
+  [3,14,0, [12,0,12], ["A","BC","AB"]],
+  [3,14,0, [12,12,0], ["A","AC","C"]],
+  [4,16,0, [0,12,0],  ["BABABBAAB","CA","B"]],
+  [4,16,0, [12,12,0], ["AB","BC","AC"]],
+  [4,18,0, [12,0,12], ["BC","AB","C"]],
+  [4,18,0, [0,12,0],  ["B","AC","BC"]],
+  [4,20,0, [12,0,0],  ["BBABABBAB","BC","A"]],
+  [4,20,0, [12,12,0], ["CCAACCCCA","B","AC"]],
+  [4,22,0, [12,0,0],  ["AB","BC","B"]],
+  [4,22,0, [12,0,0],  ["ACCCCAACC","AC","AB"]],
+  [4,24,0, [12,12,0], ["AB","ABC","BC"]],
+  [5,26,6, [12,12,0], ["AC","AB","BC"]],
+  [4,28,0, [12,0,0],  ["ABCBAABBAA","BC","AC"]],
+  [5,30,0, [12,0,0],  ["ABC","BC","AC"]]
+].map(([slots,reserve,solar,impacts,patterns]) => ({ slots,reserve,solar,impacts,patterns }));
+const sources = {
+  moon: ["月球概况", "https://science.nasa.gov/moon/facts/"],
+  relay: ["月球通信与导航中继", "https://www.nasa.gov/goddard/esc/lcrns/"],
+  moonWeather: ["月球上的天气与永久阴影", "https://science.nasa.gov/moon/weather-on-the-moon/"],
+  mars: ["火星概况", "https://science.nasa.gov/mars/facts/"],
+  dust: ["火星上的尘土", "https://science.nasa.gov/solar-system/planets/mars/10-things-dust-in-the-wind-on-mars-and-well-beyond/"],
+  asteroid: ["小行星概况", "https://science.nasa.gov/solar-system/asteroids/facts/"],
+  rocks: ["太空中的小天体", "https://science.nasa.gov/solar-system/10-things-whats-that-space-rock/"],
+  meteors: ["流星与陨石", "https://science.nasa.gov/solar-system/meteors-meteorites/facts/"],
+  ceres: ["谷神星概况", "https://science.nasa.gov/dwarf-planets/ceres/facts/"],
+  europa: ["木卫二概况", "https://science.nasa.gov/jupiter/jupiter-moons/europa/europa-facts/"],
+  radiation: ["欧罗巴快船任务", "https://science.nasa.gov/mission/europa-clipper/mission-overview/"],
+  enceladus: ["土卫二概况", "https://science.nasa.gov/saturn/moons/enceladus/"],
+  gravity: ["引力辅助指南", "https://science.nasa.gov/learn/basics-of-space-flight/primer/"],
+  voyager: ["旅行者探测器资料", "https://science.nasa.gov/mission/voyager/fact-sheet/"],
+  clipper: ["欧罗巴快船的太阳能板", "https://science.nasa.gov/mission/europa-clipper/mission-overview/"],
+  signal: ["无线电信号和光日", "https://science.nasa.gov/mission/voyager/voyager-1/voyager-1-what-is-a-light-day/"],
+  heliosphere: ["旅行者星际观测", "https://science.nasa.gov/mission/voyager/interstellar-science/"]
+};
+const chapters = [
+  { name: "月球前哨", mark: "#c6bbff", sky: "#272853", land: "#111933", path: "#484e78", line: "#b2b9f4", stone: "#9f9bca", planet: ["#d0ccff","#6b70be","#2c2d62"] },
+  { name: "火星营地", mark: "#ffa998", sky: "#593741", land: "#2a1a35", path: "#744952", line: "#f2aa93", stone: "#d47c66", planet: ["#ffc59c","#b76457","#653951"] },
+  { name: "小行星带", mark: "#ffda93", sky: "#393653", land: "#19162c", path: "#68576b", line: "#edc298", stone: "#ad976e", planet: ["#fff0bc","#a99264","#51434d"] },
+  { name: "冰封卫星", mark: "#94f4e8", sky: "#23485e", land: "#122239", path: "#316079", line: "#9be5eb", stone: "#7bcedc", planet: ["#ccfff6","#6298ac","#2c4c65"] },
+  { name: "深空边界", mark: "#f0a9ee", sky: "#432953", land: "#1a1633", path: "#5c4371", line: "#e2a6e6", stone: "#b682c7", planet: ["#ffc4f2","#9462ab","#4f3169"] }
+];
+const layouts = [
+  { path:[[50,143],[218,143],[218,305],[393,305],[393,174],[567,174],[567,301],[750,301]], pads:[[133,80],[273,212],[144,245],[302,359],[449,245],[475,106],[621,237],[685,358]], scan:[705,115] },
+  { path:[[50,290],[185,290],[185,127],[340,127],[340,259],[523,259],[523,137],[750,137]], pads:[[108,223],[121,351],[250,203],[280,69],[414,192],[451,330],[591,202],[680,79]], scan:[688,300] },
+  { path:[[50,119],[232,119],[232,235],[417,235],[417,343],[600,343],[600,175],[750,175]], pads:[[135,61],[157,184],[291,171],[317,291],[467,288],[511,378],[663,279],[686,112]], scan:[448,107] },
+  { path:[[50,291],[252,291],[252,144],[412,144],[412,201],[572,201],[572,308],[750,308]], pads:[[150,222],[172,349],[311,219],[327,82],[491,136],[483,270],[635,246],[679,369]], scan:[689,106] },
+  { path:[[50,151],[167,151],[167,298],[329,298],[329,166],[498,166],[498,275],[750,275]], pads:[[106,88],[104,237],[229,226],[259,361],[391,231],[426,103],[564,222],[653,346]], scan:[668,106] },
+  { path:[[50,295],[212,295],[212,155],[396,155],[396,305],[558,305],[558,162],[750,162]], pads:[[125,228],[138,355],[270,220],[287,95],[454,224],[480,365],[632,223],[668,99]], scan:[700,314] },
+  { path:[[50,117],[193,117],[193,266],[346,266],[346,177],[512,177],[512,312],[750,312]], pads:[[120,61],[128,190],[254,193],[272,325],[411,243],[440,117],[579,246],[664,374]], scan:[685,103] },
+  { path:[[50,308],[178,308],[178,192],[345,192],[345,102],[549,102],[549,249],[750,249]], pads:[[106,244],[254,252],[226,127],[321,62],[410,164],[478,60],[615,186],[665,316]], scan:[464,331] },
+  { path:[[50,160],[236,160],[236,312],[412,312],[412,185],[584,185],[584,277],[750,277]], pads:[[144,101],[160,229],[301,234],[324,371],[471,246],[490,120],[648,213],[661,342]], scan:[711,101] },
+  { path:[[50,308],[200,308],[200,157],[355,157],[355,259],[527,259],[527,134],[641,134],[641,310],[750,310]], pads:[[125,237],[145,370],[264,220],[286,96],[417,197],[456,317],[581,191],[698,241]], scan:[695,83] }
+];
+const robots = {
+  beam:  { name:"激光机器人", glyph:"✦", color:"#a3c3ff", desc:"火力 4 · 遇重型 −1", cost:44, fee:5, power:4, unlock:0 },
+  solar: { name:"太阳能机器人", glyph:"☀", color:"#ffda8a", desc:"每波结算时发电", cost:39, fee:2, power:0, unlock:1 },
+  frost: { name:"冰冻机器人", glyph:"❄", color:"#7aeae0", desc:"火力 2 · 遇快速 +4", cost:48, fee:6, power:2, unlock:2 },
+  pulse: { name:"脉冲机器人", glyph:"◎", color:"#e4b2ff", desc:"火力 5 · 遇重型 +3", cost:59, fee:8, power:5, unlock:8 }
+};
+const debris = {
+  o: { name:"普通", health:4, speed:97, impact:15, bounty:9, radius:11, color:"#c5beed" },
+  r: { name:"快速", health:6, speed:155, impact:12, bounty:10, radius:9, color:"#ffad82" },
+  h: { name:"外壳", health:7, speed:89, impact:24, bounty:14, radius:14, color:"#caa0f4" },
+  b: { name:"巨石", health:12, speed:68, impact:42, bounty:24, radius:20, color:"#ffbd95" }
+};
+
+const canvas = byId("map");
+const ctx = canvas.getContext("2d");
+const landscape = document.createElement("canvas");
+landscape.width = WIDTH;
+landscape.height = HEIGHT;
+const terrain = landscape.getContext("2d");
+const popup = byId("popup");
+const dialogBody = byId("dialog-body");
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
+const robotButtons = new Map();
+let slow = false;
+let session;
+let padButtons;
+let scanPin;
+let progress = loadProgress();
+
+const AudioEngine = window.AudioContext || window.webkitAudioContext;
+const SOUND_KEY = "space-base-commander-sound";
+const SOUND_RATE = 16000;
+const sectorMusic = [
+  { bar:2.8, bass:[45,41,48,43], notes:[[69,72,76],[69,72,77],[67,72,76],[67,71,74]], color:.12, air:.043 },
+  { bar:2.35, bass:[40,40,43,38], notes:[[64,67,71],[64,67,74],[67,71,74],[62,65,69]], color:.30, air:.091 },
+  { bar:2.1, bass:[47,43,45,42], notes:[[71,78,74,78],[67,74,71,79],[69,76,72,76],[66,73,69,76]], color:.22, air:.035 },
+  { bar:3.3, bass:[50,45,48,55], notes:[[74,81,86],[76,81,84],[72,79,84],[71,79,83]], color:.07, air:.029 },
+  { bar:3.55, bass:[36,43,38,41], notes:[[72,79,83],[71,74,79],[69,74,77],[69,72,77]], color:.15, air:.063 }
+];
+
+// 波形、起始音高、结束音高、延迟、时长、音量。
+const soundCues = {
+  select: { tones:[["sine",456,498,0,.072,.043]] },
+  build: { tones:[["triangle",185,130,0,.092,.10],["sine",560,690,.054,.12,.072]], noise:[980,.07,.066] },
+  move: { tones:[["triangle",242,485,0,.18,.065],["sine",610,610,.12,.10,.045]] },
+  upgrade: { tones:[["triangle",400,450,0,.13,.062],["sine",595,640,.079,.14,.075],["sine",825,825,.16,.20,.078]] },
+  recycle: { tones:[["triangle",460,232,0,.17,.072],["sine",320,290,.13,.125,.055]] },
+  repair: { tones:[["sine",340,500,0,.22,.077],["sine",600,770,.065,.25,.063]] },
+  reject: { tones:[["sine",310,278,0,.15,.059],["triangle",259,238,.10,.14,.036]] },
+  scan: { tones:[["sine",430,820,0,.27,.056],["sine",670,1060,.13,.25,.047]] },
+  discover: { tones:[["sine",587,587,0,.26,.069],["triangle",740,740,.095,.28,.069],["sine",880,880,.19,.42,.086]] },
+  launch: { tones:[["triangle",110,244,0,.27,.11],["sine",439,523,.13,.23,.062],["sine",659,659,.28,.25,.071]] },
+  pause: { tones:[["sine",442,305,0,.15,.047]] },
+  resume: { tones:[["sine",305,442,0,.15,.047]] },
+  incoming: { tones:[["sine",228,184,0,.125,.05],["sine",228,177,.16,.136,.038]], gap:.24 },
+  beam: { tones:[["triangle",960,210,0,.18,.11]], gap:.09 },
+  frost: { tones:[["sine",1120,1450,0,.12,.061],["triangle",1520,820,.03,.15,.055]], noise:[2160,.12,.14], gap:.10 },
+  pulse: { tones:[["triangle",140,65,0,.23,.12],["sine",244,102,.017,.19,.083]], noise:[460,.11,.10], gap:.10 },
+  rockBreak: { tones:[["triangle",286,159,0,.12,.055]], noise:[1350,.14,.18], gap:.10 },
+  shieldHit: { tones:[["triangle",105,52,0,.30,.17],["sine",430,214,.018,.25,.065]], noise:[560,.21,.25], gap:.16 },
+  solar: { tones:[["sine",440,580,0,.18,.060],["sine",660,815,.12,.26,.062]] },
+  waveClear: { tones:[["sine",392,392,0,.19,.066],["triangle",523,523,.10,.22,.065],["sine",659,659,.20,.32,.081]] },
+  victory: { tones:[["triangle",523,523,0,.25,.080],["sine",659,659,.11,.30,.078],["triangle",784,784,.22,.36,.082],["sine",1047,1047,.35,.58,.082]] },
+  defeat: { tones:[["sine",370,350,0,.30,.066],["triangle",294,264,.18,.38,.063],["sine",221,208,.37,.45,.064]] }
+};
+
+let soundEnabled = true;
+let gameAudio;
+try {
+  soundEnabled = localStorage.getItem(SOUND_KEY) !== "off";
+} catch {
+  // The current page can still mute or unmute.
+}
+
+function noiseStream(seed) {
+  return () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 2147483648 - 1;
+  };
+}
+
+function mixNote(samples, start, length, note, volume, overtone = .12) {
+  const frequency = 440 * 2 ** ((note - 69) / 12);
+  const first = Math.round(start * SOUND_RATE);
+  const count = Math.min(Math.round(length * SOUND_RATE), samples.length - first);
+  for (let i = 0; i < count; i += 1) {
+    const time = i / SOUND_RATE;
+    const phase = 2 * Math.PI * frequency * time;
+    const envelope = Math.min(1, time / .055) * (1 - i / count) ** 2;
+    samples[first + i] += volume * envelope * (Math.sin(phase) + overtone * Math.sin(phase * 2));
+  }
+}
+
+function makeBackground(context, name) {
+  const hasMusic = typeof name === "number";
+  const music = sectorMusic[name];
+  const duration = hasMusic ? music.bass.length * music.bar : name === "battle" ? 3.6 : 8;
+  const buffer = context.createBuffer(1, Math.round(SOUND_RATE * duration), SOUND_RATE);
+  const samples = buffer.getChannelData(0);
+  const random = noiseStream(hasMusic ? 817 + name : 391);
+  let wind = 0;
+  let texture = 0;
+  if (name === "battle") {
+    for (let beat = 0; beat < 8; beat += 1) {
+      mixNote(samples, beat * .45, .29, beat % 2 ? 35 : 31, beat % 2 ? .05 : .088, .30);
+    }
+    return buffer;
+  }
+  for (let i = 0; i < samples.length; i += 1) {
+    const white = random();
+    const time = i / SOUND_RATE;
+    wind += .015 * (white - wind);
+    texture += .075 * (white - texture);
+    const edge = Math.min(1, time * 5, (duration - time) * 5);
+    const swell = .61 + .32 * Math.sin(4 * Math.PI * time / duration);
+    samples[i] = hasMusic ? wind * music.air * swell * edge :
+      (wind * .30 + (texture - wind) * .075) * swell * edge;
+  }
+  if (hasMusic) {
+    music.bass.forEach((note, bar) => {
+      const start = bar * music.bar;
+      mixNote(samples, start, music.bar * .94, note, .105, music.color);
+      mixNote(samples, start + .15, music.bar * .83, note + 7, .040, music.color);
+      music.notes[bar].forEach((pitch, beat) => {
+        const onset = start + .24 + music.bar * .76 * beat / music.notes[bar].length;
+        const length = music.bar * (name === 3 || name === 4 ? .56 : .40);
+        mixNote(samples, onset, length, pitch, .049, music.color);
+        if (name === 3 || name === 4) mixNote(samples, onset + .19, length * .8, pitch, .015);
+      });
+    });
+  }
+  return buffer;
+}
+
+function connectBackground(audio, name, level) {
+  const { context, music, buffers, tracks } = audio;
+  if (!buffers.has(name)) buffers.set(name, makeBackground(context, name));
+  const source = context.createBufferSource();
+  const gain = context.createGain();
+  gain.gain.value = 0;
+  source.buffer = buffers.get(name);
+  source.loop = true;
+  source.connect(gain).connect(music);
+  source.onended = () => { source.disconnect(); gain.disconnect(); };
+  source.start();
+  gain.gain.setTargetAtTime(level, context.currentTime, .22);
+  tracks.set(name, { source, gain });
+}
+
+function syncGameAudio() {
+  const audio = gameAudio;
+  if (!audio || !session || audio.context.state === "closed") return;
+  const audible = soundEnabled && !document.hidden;
+  const battle = session.phase === "wave" && !popup.open;
+  const dust = battle && isDustWave();
+  const sector = Math.floor(session.index / 4);
+  const duck = popup.open || session.phase === "paused" || isOver();
+  const scene = [audible, sector, battle, dust, duck].join("/");
+  if (scene === audio.scene) return;
+
+  try {
+    mixBackground(audio, audible, battle, dust, sector, duck);
+    audio.scene = scene;
+  } catch {
+    releaseGameAudio(audio);
+  }
+}
+
+function mixBackground(audio, audible, battle, dust, sector, duck) {
+  const { context, volume, music, tracks } = audio;
+  const now = context.currentTime;
+  volume.gain.setTargetAtTime(audible ? .73 : 0, now, audible ? .10 : .012);
+  music.gain.setTargetAtTime(duck ? .32 : .73, now, .15);
+  const levels = new Map();
+  if (audible) {
+    levels.set(sector, battle ? .52 : .84);
+    if (battle) levels.set("battle", .46);
+    if (dust) levels.set("dust", .69);
+  } else {
+    audio.pending = null;
+  }
+
+  for (const [name, { source, gain }] of tracks) {
+    const level = levels.get(name);
+    gain.gain.setTargetAtTime(level ?? 0, now, .19);
+    if (level === undefined) {
+      source.stop(now + .78);
+      tracks.delete(name);
+    }
+  }
+  for (const [name, level] of levels) {
+    if (!tracks.has(name)) connectBackground(audio, name, level);
+  }
+}
+
+function releaseGameAudio(audio) {
+  if (gameAudio !== audio) return;
+  gameAudio = undefined;
+  if (audio.context.state !== "closed") audio.context.close().catch(() => {});
+}
+
+function playEnvelope(context, output, source, now, duration, loudness, extraNode) {
+  const gain = context.createGain();
+  const floor = .0001;
+  gain.gain.setValueAtTime(floor, now);
+  gain.gain.exponentialRampToValueAtTime(loudness, now + .014);
+  gain.gain.exponentialRampToValueAtTime(floor, now + duration);
+  (extraNode || source).connect(gain).connect(output);
+  if (extraNode) source.connect(extraNode);
+  source.onended = () => { source.disconnect(); extraNode?.disconnect(); gain.disconnect(); };
+  source.start(now);
+  source.stop(now + duration);
+}
+
+function playSound(name, delay = 0) {
+  const audio = gameAudio;
+  const cue = soundCues[name];
+  if (!audio || !cue || !soundEnabled || document.hidden || audio.context.state === "closed") return;
+  const { context, lastSound } = audio;
+  if (context.state !== "running") {
+    if (audio.resuming) audio.pending = { name, delay, time:performance.now() };
+    return;
+  }
+  const now = context.currentTime + delay;
+  if (now - (lastSound.get(name) ?? -1) < (cue.gap ?? .065)) return;
+  lastSound.set(name, now);
+  try {
+    emitCue(audio, cue, now);
+  } catch {
+    releaseGameAudio(audio);
+  }
+}
+
+function emitCue(audio, cue, now) {
+  const { context, effects } = audio;
+  for (const [waveform, frequency, end, offset, duration, level] of cue.tones) {
+    const tone = context.createOscillator();
+    tone.type = waveform;
+    tone.frequency.setValueAtTime(frequency, now + offset);
+    tone.frequency.exponentialRampToValueAtTime(end, now + offset + duration);
+    playEnvelope(context, effects, tone, now + offset, duration, level);
+  }
+  if (cue.noise) {
+    if (!audio.noise) {
+      const buffer = context.createBuffer(1, SOUND_RATE, SOUND_RATE);
+      const samples = buffer.getChannelData(0);
+      const random = noiseStream(501);
+      for (let i = 0; i < samples.length; i += 1) samples[i] = random();
+      audio.noise = buffer;
+    }
+    const [frequency, duration, level] = cue.noise;
+    const grit = context.createBufferSource();
+    grit.buffer = audio.noise;
+    const filter = context.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(frequency, now);
+    playEnvelope(context, effects, grit, now, duration, level, filter);
+  }
+}
+
+function wakeGameAudio() {
+  if (!AudioEngine || !soundEnabled || document.hidden) return;
+  try {
+    if (!gameAudio || gameAudio.context.state === "closed") {
+      const context = new AudioEngine();
+      const volume = context.createGain();
+      const music = context.createGain();
+      const effects = context.createGain();
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.value = -17;
+      compressor.ratio.value = 4;
+      volume.gain.value = 0;
+      music.gain.value = .73;
+      effects.gain.value = .85;
+      music.connect(volume);
+      effects.connect(volume);
+      volume.connect(compressor).connect(context.destination);
+      gameAudio = { context, volume, music, effects, tracks:new Map(), buffers:new Map(), lastSound:new Map() };
+    }
+    const audio = gameAudio;
+    if (audio.context.state === "running") {
+      syncGameAudio();
+    } else if (!audio.resuming) {
+      audio.resuming = true;
+      audio.context.resume().then(() => {
+        if (gameAudio !== audio) return;
+        const cue = audio.pending;
+        audio.pending = null;
+        syncGameAudio();
+        if (cue && performance.now() - cue.time < 350) playSound(cue.name, cue.delay);
+      }).catch(() => {
+        audio.pending = null;
+      }).finally(() => {
+        audio.resuming = false;
+      });
+    }
+  } catch {
+    // The game remains playable if an audio device is unavailable.
+  }
+}
+
+function bindSoundControls() {
+  if (!AudioEngine) return;
+  const toggle = byId("sound-toggle");
+  const showPreference = () => {
+    toggle.setAttribute("aria-pressed", String(soundEnabled));
+    toggle.textContent = soundEnabled ? "🔊" : "🔇";
+    toggle.title = soundEnabled ? "关闭游戏声音" : "开启游戏声音";
+  };
+  toggle.hidden = false;
+  showPreference();
+  toggle.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    try {
+      localStorage.setItem(SOUND_KEY, soundEnabled ? "on" : "off");
+    } catch {
+      // Use the preference for the current visit.
+    }
+    showPreference();
+    if (soundEnabled) wakeGameAudio();
+    else syncGameAudio();
+  });
+  document.addEventListener("click", (event) => {
+    if (event.isTrusted && !toggle.contains(event.target)) wakeGameAudio();
+  }, { capture:true });
+  popup.addEventListener("close", syncGameAudio);
+  document.addEventListener("visibilitychange", syncGameAudio);
+}
+
+function loadProgress() {
+  const empty = { stars: {}, scans: {}, strategy: {} };
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    for (let index = 0; index < missions.length; index += 1) {
+      const stars = saved?.stars?.[index];
+      if (Number.isInteger(stars) && stars >= 1 && stars <= 3) empty.stars[index] = stars;
+      if (saved?.scans?.[index] === true) empty.scans[index] = true;
+      if (saved?.strategy?.[index] === true) empty.strategy[index] = true;
+    }
+  } catch {
+    // A privacy setting or malformed save leaves a fresh in-memory game.
+  }
+  return empty;
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(progress));
+  } catch {
+    // Keep the current session playable when browser storage is unavailable.
+  }
+}
+
+function levelNumber(index) {
+  return String(index + 1).padStart(2, "0");
+}
+
+function unlocked(index) {
+  return index === 0 || Boolean(progress.stars[index - 1] || progress.stars[index]);
+}
+
+function makeMap(index) {
+  const layout = layouts[Math.floor(index / 2)];
+  const orient = ([x, y]) => ({ x, y: index % 2 ? HEIGHT - y : y });
+  const path = layout.path.map(orient);
+  let length = 0;
+  const segments = path.slice(1).map((to, i) => {
+    const from = path[i];
+    const size = Math.hypot(to.x - from.x, to.y - from.y);
+    const segment = { from, to, size, start: length };
+    length += size;
+    return segment;
+  });
+  const pads = layout.pads.map((point, i) => ({
+    ...orient(point), zone:zones.findIndex((zone) => point[0] < zone.edge), shaded:[1, 3, 6].includes(i)
+  }));
+  const gates = zones.map(({gate}) => {
+    const segment = segments.find(({from,to}) => from.x <= gate && gate <= to.x && from.x < to.x);
+    return segment.start + gate - segment.from.x;
+  });
+  return { path, segments, length, pads, gates, scan:orient(layout.scan) };
+}
+
+function beginMission(index) {
+  if (popup.open) popup.close();
+  const mission = missions[index];
+  session = {
+    index, mission, rules:strategyRules[index], chapter:chapters[Math.floor(index / 4)], map:makeMap(index),
+    energy:mission.energy, shield:100, complete:0, phase:"prep", scanned:false,
+    selected:"beam", inspected:null, built:new Map(), rocks:[], effects:[]
+  };
+  byId("sector").textContent = session.chapter.name + " · 第 " + levelNumber(index) + " 关";
+  byId("mission-title").textContent = mission.name;
+  byId("briefing").textContent = mission.brief;
+  ["--p-light","--p-mid","--p-dark"].forEach((name,i) => byId("planet").style.setProperty(name, session.chapter.planet[i]));
+  buildMapControls();
+  drawLandscape();
+  renderProgress();
+  render();
+  say(index === 0 ? "选一处 A 航段和一处 B 航段，各放一台激光机器人。看看两段的火力够不够。" : mission.tip);
+}
+
+function position(element, point, offsetY = 0) {
+  element.style.left = point.x / WIDTH * 100 + "%";
+  element.style.top = (point.y + offsetY) / HEIGHT * 100 + "%";
+}
+
+function buildMapControls() {
+  const container = byId("map-controls");
+  container.replaceChildren();
+  padButtons = session.map.pads.map((point, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    position(button, point);
+    button.addEventListener("click", () => selectPad(index));
+    container.append(button);
+    return button;
+  });
+  scanPin = document.createElement("button");
+  scanPin.type = "button";
+  position(scanPin, session.map.scan);
+  scanPin.addEventListener("click", openDiscovery);
+  container.append(scanPin);
+  const endpoints = [[session.map.path[0], "碎石入口", ""], [session.map.path.at(-1), "太空基地", " base"]];
+  for (const [point, text, extraClass] of endpoints) {
+    const tag = document.createElement("span");
+    tag.className = "map-tag" + extraClass;
+    tag.textContent = text;
+    position(tag, point, point.y > HEIGHT - 65 ? -39 : 40);
+    container.append(tag);
+  }
+}
+
+function setupRobotButtons() {
+  for (const [type, robot] of Object.entries(robots)) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "build-card";
+    button.style.setProperty("--bot", robot.color);
+    button.innerHTML = '<span class="unit-mark" aria-hidden="true">' + robot.glyph + '</span>' +
+      '<span><strong class="build-name">' + robot.name + '</strong><small></small></span>' +
+      '<span class="cost">ϟ ' + robot.cost + '</span>';
+    button.addEventListener("click", () => {
+      session.selected = type;
+      session.inspected = null;
+      playSound("select");
+      say("已选中" + robot.name + "。点地图上的「＋」布置。");
+      render();
+    });
+    robotButtons.set(type, button);
+    byId("build-list").append(button);
+  }
+}
+
+function isOver() {
+  return session.phase === "won" || session.phase === "lost";
+}
+
+function say(message) {
+  byId("message").textContent = message;
+}
+
+function renderProgress() {
+  const totalStars = Object.values(progress.stars).reduce((total, rating) => total + rating, 0);
+  byId("total-progress").textContent = totalStars + " / 60 星";
+  byId("route-progress").textContent = "策略通关 " + Object.keys(progress.strategy).length + " / 20";
+  byId("chapters").replaceChildren(...chapters.map((chapter, chapterIndex) => {
+    const card = document.createElement("section");
+    card.className = "chapter" + (chapterIndex === Math.floor(session.index / 4) ? " current" : "");
+    card.style.setProperty("--mark", chapter.mark);
+    const title = document.createElement("h3");
+    title.textContent = chapter.name;
+    const list = document.createElement("div");
+    list.className = "chapter-levels";
+    for (let i = chapterIndex * 4; i < chapterIndex * 4 + 4; i += 1) {
+      const button = document.createElement("button");
+      const rating = progress.stars[i] || 0;
+      button.type = "button";
+      button.disabled = !unlocked(i);
+      button.title = missions[i].name;
+      button.setAttribute("aria-label", "第 " + (i + 1) + " 关 " + missions[i].name +
+        (button.disabled ? "，待解锁" : "，" + rating + " 星"));
+      if (i === session.index) button.setAttribute("aria-current", "step");
+      button.innerHTML = (i + 1) + "<small aria-hidden='true'>" +
+        (progress.strategy[i] ? "✓ " : "") + (rating ? "★".repeat(rating) : button.disabled ? "◇" : "·") + "</small>";
+      button.addEventListener("click", () => {
+        if (i === session.index) {
+          window.scrollTo({ top:0, behavior:motion.matches ? "auto" : "smooth" });
+          return;
+        }
+        if (!isOver() && (session.complete || session.phase !== "prep" || session.built.size)) {
+          confirmAction("切换关卡？", "当前波次和布置会重新开始，已记录的星星和图鉴会保留。", "前往第 " + (i + 1) + " 关", () => goTo(i));
+          return;
+        }
+        goTo(i);
+      });
+      list.append(button);
+    }
+    card.append(title, list);
+    return card;
+  }));
+}
+
+function render() {
+  const { mission, energy, shield, complete, phase, inspected, scanned } = session;
+  const planning = phase === "prep";
+  byId("build-slots").textContent = "工位 " + session.built.size + " / " + session.rules.slots;
+  byId("energy").textContent = energy;
+  byId("shield").textContent = shield;
+  byId("shield-meter").style.width = shield + "%";
+  byId("wave").innerHTML = complete + " <span>/ " + mission.waves.length + "</span>";
+  byId("wave-meter").style.width = 100 * complete / mission.waves.length + "%";
+  const phaseText = { prep:"布置时间", wave:"拦截中", paused:"已暂停", won:"任务完成", lost:shield === 0 ? "护盾耗尽" : "防守失败" };
+  const dusty = isDustWave() && (phase === "wave" || phase === "paused");
+  const phaseDetail = dusty ? " · 尘暴" : "";
+  byId("field").classList.toggle("dust", dusty);
+  byId("phase").textContent = phaseText[phase] + phaseDetail;
+  const start = byId("start");
+  start.textContent = {
+    prep:"核算能量并出发", wave:"Ⅱ 暂停拦截", paused:"▶ 继续拦截",
+    won:session.index === missions.length - 1 ? "查看完成记录" : "前往下一关", lost:"再试一次"
+  }[phase];
+  byId("repair").disabled = !planning || shield === 100 || energy < REPAIR_COST;
+  scanPin.disabled = byId("scan").disabled = !planning && !isOver();
+  byId("speed").textContent = slow ? "慢速节奏" : "正常节奏";
+  byId("speed").setAttribute("aria-pressed", String(slow));
+  if (!session.lastScanRender || session.lastScanRender !== String(scanned)) {
+    scanPin.className = "board-control scan-pin" + (scanned ? " found" : "");
+    scanPin.textContent = scanned ? "✓" : "✧";
+    scanPin.setAttribute("aria-label", (scanned ? "查看" : "扫描") + mission.point);
+    byId("scan-title").textContent = scanned ? "已发现 · " + mission.point : "扫描地图上的发现点";
+    byId("scan-subtitle").textContent = scanned ? "点开重读科学记录" : "答对可得 " + SCAN_REWARD + " 能量";
+    session.lastScanRender = String(scanned);
+  }
+  for (const [type, button] of robotButtons) {
+    const robot = robots[type];
+    const available = session.index >= robot.unlock;
+    const label = available ? robot.desc : "第 " + (robot.unlock + 1) + " 关解锁";
+    button.disabled = !available || !planning;
+    button.setAttribute("aria-pressed", String(session.selected === type));
+    button.classList.toggle("unaffordable", energy < robot.cost);
+    if (button.querySelector("small").textContent !== label) button.querySelector("small").textContent = label;
+  }
+  for (const [i, button] of padButtons.entries()) {
+    const bot = session.built.get(i);
+    const pad = session.map.pads[i];
+    const terrainClass = pad.shaded ? "shade-empty" : "sun-empty";
+    const showSun = mission.rule === "shade" && (!bot || bot.type === "solar");
+    const selected = session.selected && energy >= robots[session.selected].cost;
+    const className = "board-control " + (bot ? "placed " : selected ? "is-ready " : "") + (showSun ? terrainClass : "");
+    if (button.className !== className) button.className = className;
+    button.setAttribute("aria-pressed", String(i === inspected));
+    button.disabled = !planning;
+    const zone = zones[pad.zone];
+    button.style.setProperty("--zone-color", zone.color);
+    const content = '<span class="pad-zone" aria-hidden="true">' + zone.code + '</span>' +
+      (bot ? robots[bot.type].glyph + '<span class="bot-level">' + bot.level + '</span>' : "＋");
+    if (button.dataset.content !== content) {
+      button.innerHTML = content;
+      button.dataset.content = content;
+    }
+    if (bot) button.style.setProperty("--bot", robots[bot.type].color);
+    button.setAttribute("aria-label", zone.code + " " + zone.name + "，建造位 " + (i + 1) + (showSun ? (pad.shaded ? "，月影" : "，有阳光") : "") +
+      (bot ? "，" + robots[bot.type].name + " " + bot.level + " 级" : "，空位"));
+  }
+  const bot = session.built.get(inspected);
+  byId("manage").hidden = !bot || !planning;
+  if (bot) {
+    const robot = robots[bot.type];
+    const cost = upgradeCost(bot);
+    const output = bot.type === "solar" ? "发电 " + solarYield(bot) : "基础火力 " + (robot.power + (bot.level - 1) * 2);
+    byId("manage-label").textContent = robot.name + " · " + bot.level + " 级 · " + output +
+      " · 启动 " + activationFee(bot) + " 能量";
+    byId("upgrade").textContent = bot.level >= 3 ? "已满级" : "升级 · " + cost;
+    byId("upgrade").disabled = bot.level >= 3 || session.energy < cost;
+    byId("recycle").textContent = "回收 · +" + Math.floor(bot.spent * .65);
+  }
+  renderPlan();
+  drawBoard();
+  syncGameAudio();
+}
+
+function upgradeCost(bot) {
+  return Math.ceil(robots[bot.type].cost * (bot.level === 1 ? .7 : .95));
+}
+
+function selectPad(index) {
+  if (session.phase !== "prep") return;
+  const bot = session.built.get(index);
+  if (bot) {
+    session.inspected = index;
+    session.selected = null;
+    playSound("select");
+    say(robots[bot.type].name + " 已选中。点空位可免费移动，也可在工坊升级。");
+  } else {
+    const type = session.selected;
+    if (!type) {
+      const moving = session.built.get(session.inspected);
+      if (moving) {
+        session.built.delete(moving.index);
+        moving.index = index;
+        session.built.set(index, moving);
+        session.inspected = index;
+        playSound("move");
+        say("已免费移动到 " + zones[session.map.pads[index].zone].code + " 航段。看看拦截计划有什么变化。");
+        render();
+        return;
+      }
+      playSound("reject");
+      say("先在机器人工坊选一张卡片，再点地图上的「＋」。");
+      return;
+    }
+    if (session.built.size >= session.rules.slots) {
+      playSound("reject");
+      say("工位已满。点已有机器人，可以移动、升级或回收。");
+      return;
+    }
+    const robot = robots[type];
+    if (session.energy < robot.cost) {
+      playSound("reject");
+      say("能量还差 " + (robot.cost - session.energy) + "。扫描发现点或拦截碎石可以补给。");
+      return;
+    }
+    session.energy -= robot.cost;
+    session.built.set(index, { type, index, level:1, spent:robot.cost });
+    session.inspected = index;
+    playSound("build");
+    say(robot.name + " 就位！" + (session.phase === "prep" ? "准备好后就开始下一波。" : ""));
+  }
+  render();
+}
+
+function isDustWave() {
+  return session.mission.rule === "dust" && session.complete === 1;
+}
+
+function solarYield(bot) {
+  let output = 12 + (bot.level - 1) * 4;
+  if (session.mission.rule === "shade" && session.map.pads[bot.index].shaded) output -= 9;
+  if (isDustWave() || session.mission.rule === "dim") output -= 6;
+  return output;
+}
+
+function positionOnPath(distance) {
+  const segment = session.map.segments.find((item) => distance <= item.start + item.size);
+  if (!segment) return session.map.path.at(-1);
+  const portion = (distance - segment.start) / segment.size;
+  return {
+    x:segment.from.x + (segment.to.x - segment.from.x) * portion,
+    y:segment.from.y + (segment.to.y - segment.from.y) * portion
+  };
+}
+
+function activationFee(bot) {
+  return robots[bot.type].fee + bot.level - 1;
+}
+
+function powerAgainst(bot, type) {
+  const heavy = type === "h" || type === "b";
+  let power = robots[bot.type].power + (bot.level - 1) * 2;
+  if (bot.type === "frost" && type === "r") power += 4;
+  if (bot.type === "pulse" && heavy) power += 3;
+  if (bot.type === "beam" && heavy) power -= 1;
+  return power;
+}
+
+function wavePlan() {
+  const { mission, rules, built, map, complete } = session;
+  const pattern = rules.patterns[complete];
+  const bots = [...built.values()];
+  const defenders = zones.map((zone, i) => bots.filter((bot) => bot.type !== "solar" && map.pads[bot.index].zone === i));
+  const targets = [...mission.waves[complete]].map((type, i) => {
+    const zone = pattern.charCodeAt(i % pattern.length) - 65;
+    const required = debris[type].health +
+      Number((mission.rule === "armor" && type === "h") || (mission.rule === "fast" && type === "r"));
+    const power = defenders[zone].reduce((sum, bot) => sum + powerAgainst(bot, type), 0);
+    return { type, zone, required, power };
+  });
+  const fee = bots.reduce((sum, bot) => sum + activationFee(bot), 0);
+  const solar = bots.filter((bot) => bot.type === "solar").reduce((sum, bot) => sum + solarYield(bot), 0);
+  const impact = targets.reduce((sum, target) => sum + (target.power < target.required ? debris[target.type].impact : 0), 0);
+  return { defenders, targets, bots, fee, solar, impact, limit:rules.impacts[complete] };
+}
+
+function uncoveredZones(plan) {
+  const missing = new Set(plan.targets.filter(target => target.power < target.required).map(target => target.zone));
+  return [...missing].sort().map(index => zones[index].code).join("、");
+}
+
+function renderPlan() {
+  byId("plan").hidden = isOver();
+  if (isOver() || session.phase !== "prep") return;
+  const plan = wavePlan();
+  byId("plan-title").textContent = "第 " + (session.complete + 1) + " 波布防";
+  const risk = byId("impact-plan");
+  risk.textContent = "预计冲击 " + plan.impact + " / 上限 " + plan.limit;
+  risk.style.color = plan.impact <= plan.limit ? "var(--cyan)" : "var(--rose)";
+  byId("plan-zones").innerHTML = zones.map((zone, i) => {
+    const units = plan.defenders[i];
+    const basePower = units.map((bot) => robots[bot.type].power + (bot.level - 1) * 2);
+    const sum = basePower.reduce((total, power) => total + power, 0);
+    const threats = plan.targets.filter((target) => target.zone === i);
+    const rows = Object.entries(debris).map(([type, rock]) => {
+      const incoming = threats.filter((target) => target.type === type);
+      if (!incoming.length) return "";
+      const { power, required } = incoming[0];
+      const covered = power >= required;
+      const status = covered ? "met" : "short";
+      const change = power - sum;
+      const bonus = change ? '<small>' + (change > 0 ? "加成 +" : "折减 ") + change + "</small>" : "";
+      const impact = covered ? "" : '<small> · ' + incoming.length + " × " + rock.impact +
+        " = " + incoming.length * rock.impact + " 冲击</small>";
+      return '<p class="' + status + '">' + incoming.length + "×" + rock.name +
+        " · " + power + " / " + required + " 火力" + (bonus || impact ? "<br>" + bonus + impact : "") + "</p>";
+    }).join("");
+    return '<section class="plan-zone" style="--zone-color:' + zone.color + '"><h4>' +
+      zone.code + " " + zone.name + "<small>基础火力 " +
+      (basePower.length > 1 ? basePower.join(" + ") + " = " : "") + sum + "</small></h4>" +
+      (rows || "<p>本波无来袭</p>") + "</section>";
+  }).join("");
+  const goal = session.rules.solar ? " / 目标 " + session.rules.solar : "";
+  const supply = plan.solar || session.rules.solar ? " · 本波发电 " + plan.solar + goal : "";
+  byId("plan-budget").textContent = "启动 " + plan.fee + " 能量 · 启动后至少留 " + session.rules.reserve + supply;
+}
+
+function openWave() {
+  const plan = wavePlan();
+  if (plan.solar < session.rules.solar) {
+    playSound("reject");
+    say("这一波至少要发电 " + session.rules.solar + "。试试把太阳能机器人移到有阳光的位置，或给它升级。");
+    return;
+  }
+  const expected = session.energy - plan.fee;
+  if (expected < session.rules.reserve) {
+    playSound("reject");
+    say("付完启动费后还差 " + (session.rules.reserve - expected) + " 能量。试试扫描、用更少的机器人或回收一台。");
+    return;
+  }
+
+  const form = document.createElement("form");
+  form.className = "launch-form";
+  const risk = plan.impact > plan.limit || plan.impact >= session.shield;
+  const warning = risk ? '<p class="launch-warning"><strong>' + uncoveredZones(plan) + ' 航段火力不足。</strong> ' +
+    '预计冲击 ' + plan.impact + '，本波上限 ' + plan.limit + '。' +
+    (plan.impact >= session.shield ? '预计会耗尽护盾。' : '') + '超出上限，这一波就失败。' +
+    '可以返回移动机器人，也可以开波观察。</p>' : '';
+  const counts = new Map();
+  for (const bot of plan.bots) {
+    const fee = activationFee(bot);
+    counts.set(fee, (counts.get(fee) || 0) + 1);
+  }
+  const terms = [...counts].map(([fee, count]) => count === 1 ? String(fee) : count + " × " + fee);
+  const equation = terms.length > 1 ? "(" + terms.join(" + ") + ")" : terms[0] || "0";
+  form.innerHTML = warning + '<p>库存 <b>' + session.energy + '</b>。付完启动费，基地至少要留 <b>' +
+    session.rules.reserve + '</b> 能量。</p><label for="energy-answer">开波后还剩几格能量？</label>' +
+    '<p class="reveal">' + session.energy + " − " + equation + ' = ?</p>' +
+    '<input id="energy-answer" name="energy" type="text" inputmode="numeric" pattern="[0-9]+" required autocomplete="off">' +
+    '<p class="launch-feedback" aria-live="polite"></p>' +
+    '<div class="action-row"><button type="button" class="return-to-plan">返回布防</button>' +
+    '<button type="submit" class="primary">' + (risk ? '开波观察' : '确认启动') + '</button></div>';
+  form.querySelector('.return-to-plan').addEventListener('click', () => popup.close());
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = form.elements.energy;
+    const feedback = form.querySelector(".launch-feedback");
+    if (Number(input.value) !== expected) {
+      playSound("reject");
+      feedback.textContent = "启动费共 " + plan.fee + "。用 " + session.energy + " 减去 " + plan.fee + " 再试一次。";
+      input.select();
+      return;
+    }
+    popup.close();
+    session.energy = expected;
+    session.activePlan = plan;
+    session.phase = "wave";
+    session.nextRock = 0;
+    session.spawnIn = .55;
+    session.waveStartShield = session.shield;
+    playSound("launch");
+    say("启动费 −" + plan.fee + "，剩余 " + expected + " 能量。观察各航段怎样拦截碎石。");
+    render();
+  });
+  openDialog("核对启动能量", form);
+  playSound("select");
+  form.elements.energy.focus();
+}
+
+function spawnRock(target) {
+  const { type, required } = target;
+  session.rocks.push({
+    ...target, hp:required, max:required, distance:0, frozen:0, fired:false,
+    spin:(session.nextRock * .78) % (Math.PI * 2), point:session.map.path[0]
+  });
+}
+
+function intercept(rock) {
+  rock.fired = true;
+  const defenders = session.activePlan.defenders[rock.zone];
+  rock.hp -= rock.power;
+  if (rock.type === "r" && defenders.some((bot) => bot.type === "frost")) rock.frozen = 1.2;
+  for (const type of new Set(defenders.map((bot) => bot.type))) playSound(type);
+  for (const bot of defenders) {
+    session.effects.push({
+      kind:"ray", from:session.map.pads[bot.index], to:rock.point,
+      color:robots[bot.type].color, life:.26
+    });
+  }
+}
+
+function tick(delta) {
+  const energy = session.energy;
+  const shield = session.shield;
+  const wave = session.activePlan.targets;
+  session.spawnIn -= delta;
+  if (session.nextRock < wave.length && session.spawnIn <= 0) {
+    if (session.nextRock === 0 || wave[session.nextRock].type === "b") playSound("incoming");
+    spawnRock(wave[session.nextRock]);
+    session.nextRock += 1;
+    session.spawnIn += session.index >= 8 && session.nextRock % 3 !== 0 ? .52 : .87;
+  }
+  for (const rock of session.rocks) {
+    rock.frozen = Math.max(0, rock.frozen - delta);
+    const speedBonus = rock.type === "r" && session.mission.rule === "fast" ? 1.15 : 1;
+    rock.distance += debris[rock.type].speed * speedBonus * (rock.frozen ? .65 : 1) * delta;
+    rock.point = positionOnPath(rock.distance);
+    if (!rock.fired && rock.distance >= session.map.gates[rock.zone]) intercept(rock);
+  }
+  session.rocks = session.rocks.filter((rock) => {
+    const kind = debris[rock.type];
+    if (rock.hp <= 0) {
+      session.energy += kind.bounty;
+      playSound("rockBreak", .09);
+      session.effects.push({ kind:"gain", from:rock.point, text:"+" + kind.bounty, color:"#daff8f", life:.7 });
+      return false;
+    }
+    if (rock.distance < session.map.length) return true;
+    session.shield = Math.max(0, session.shield - kind.impact);
+    playSound("shieldHit");
+    session.effects.push({ kind:"gain", from:rock.point, text:"−" + kind.impact, color:"#ff9caa", life:.8 });
+    return false;
+  });
+  session.effects = session.effects.filter((effect) => (effect.life -= delta) > 0);
+
+  if (session.shield === 0) {
+    session.phase = "lost";
+    playSound("defeat", .19);
+    say("碎石击穿了护盾。看看哪个航段漏过了碎石，再试着调整布置。");
+    render();
+    openResult();
+    return;
+  }
+  if (session.rocks.length === 0 && session.nextRock === wave.length) {
+    endWave();
+    return;
+  }
+  if (energy !== session.energy || shield !== session.shield) render();
+}
+
+function awardStars() {
+  const stars = 1 + Number(session.shield >= 65) + Number(session.scanned);
+  progress.stars[session.index] = Math.max(progress.stars[session.index] || 0, stars);
+  saveProgress();
+  return stars;
+}
+
+function endWave() {
+  const { solar, limit } = session.activePlan;
+  const impact = session.waveStartShield - session.shield;
+  if (impact > limit) {
+    session.phase = "lost";
+    playSound("defeat", .19);
+    say("本波实际冲击 " + impact + "，超过上限 " + limit + "。看看哪个航段漏过了碎石。");
+    render();
+    openResult();
+    return;
+  }
+  session.energy += solar;
+  session.complete += 1;
+  session.effects = [];
+  if (session.complete === session.mission.waves.length) {
+    session.phase = "won";
+    playSound("victory", .16);
+    progress.strategy[session.index] = true;
+    awardStars();
+    renderProgress();
+    render();
+    say("基地守住了！你可以前往下一关，或继续调查这个发现点。");
+    openResult();
+    return;
+  }
+  session.phase = "prep";
+  session.energy += WAVE_ALLOWANCE;
+  playSound("waveClear", .16);
+  if (solar) playSound("solar", .68);
+  const weather = isDustWave() ? " 下一波有尘暴。" : "";
+  say("本波冲击 " + impact + "，补给 +" + WAVE_ALLOWANCE +
+    (solar ? "，发电 +" + solar : "") + "。" + weather + " 看看下一波要守哪些航段。");
+  render();
+}
+
+function openDialog(title, content) {
+  byId("dialog-title").textContent = title;
+  dialogBody.replaceChildren();
+  if (typeof content === "string") dialogBody.innerHTML = content;
+  else dialogBody.append(content);
+  if (!popup.open) popup.showModal();
+  syncGameAudio();
+}
+
+function confirmAction(title, message, accept, action) {
+  openDialog(title, "<p>" + message + "</p>");
+  const buttons = document.createElement("div");
+  buttons.className = "action-row";
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "primary";
+  confirm.textContent = accept;
+  confirm.addEventListener("click", action, { once:true });
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "取消";
+  cancel.addEventListener("click", () => popup.close());
+  buttons.append(confirm, cancel);
+  dialogBody.append(buttons);
+}
+
+function scienceRecord(mission) {
+  const [name, url] = sources[mission.source];
+  const record = document.createElement("div");
+  record.className = "reveal";
+  const fact = document.createElement("p");
+  fact.textContent = mission.fact;
+  const link = document.createElement("a");
+  link.href = url;
+  link.rel = "noopener noreferrer";
+  link.target = "_blank";
+  link.textContent = "NASA · " + name + " ↗";
+  record.append(fact, link);
+  return record;
+}
+
+function openDiscovery() {
+  if (session.phase !== "prep" && !isOver()) return;
+  playSound("scan");
+  const { mission } = session;
+  const content = document.createElement("div");
+  const clue = document.createElement("p");
+  clue.textContent = mission.clue;
+  content.append(clue);
+  if (session.scanned) {
+    content.append(scienceRecord(mission));
+  } else {
+    const title = document.createElement("h3");
+    title.textContent = mission.question;
+    const choices = document.createElement("div");
+    choices.className = "answers";
+    const feedback = document.createElement("p");
+    feedback.setAttribute("aria-live", "polite");
+    mission.choices.forEach((choice, i) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = choice;
+      button.addEventListener("click", () => {
+        if (session.scanned) return;
+        if (i !== mission.correct) {
+          playSound("reject");
+          button.classList.add("try-again");
+          feedback.textContent = "再读一下上面的观测线索，试试其他选项。";
+          return;
+        }
+        session.scanned = true;
+        playSound("discover");
+        progress.scans[session.index] = true;
+        if (session.phase === "won") {
+          awardStars();
+          renderProgress();
+        } else {
+          saveProgress();
+        }
+        if (!isOver()) session.energy += SCAN_REWARD;
+        for (const answer of choices.children) {
+          answer.classList.remove("try-again");
+          answer.setAttribute("aria-disabled", "true");
+        }
+        button.classList.add("correct");
+        feedback.textContent = isOver() ? "答对了！发现已加入图鉴。" : "答对了！获得 " + SCAN_REWARD + " 能量，发现已加入图鉴。";
+        content.append(scienceRecord(mission));
+        render();
+      });
+      choices.append(button);
+    });
+    content.append(title, choices, feedback);
+  }
+  openDialog("扫描 · " + mission.point, content);
+}
+
+function openLogbook() {
+  const content = document.createElement("div");
+  const intro = document.createElement("p");
+  const count = Object.keys(progress.scans).length;
+  intro.textContent = "已发现 " + count + " / 20 个科学记录。" + (count ? "" : " 去扫描地图上闪亮的「✧」，第一张卡片就在月球。");
+  const list = document.createElement("div");
+  list.className = "logbook";
+  missions.forEach((mission, i) => {
+    if (!progress.scans[i]) return;
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = levelNumber(i) + " · " + mission.point;
+    details.append(summary, scienceRecord(mission));
+    list.append(details);
+  });
+  content.append(intro, list);
+  openDialog("发现图鉴", content);
+}
+
+function openResult() {
+  const won = session.phase === "won";
+  const final = session.index === missions.length - 1;
+  const stars = won ? 1 + Number(session.shield >= 65) + Number(session.scanned) : 0;
+  let detail;
+  if (won) {
+    detail = "守住了基地，护盾剩余 " + session.shield + "。" +
+      (session.scanned ? " 这关的发现已加入图鉴。" : " 扫描发现点还可以拿到一颗星。");
+  } else {
+    const plan = session.activePlan;
+    const impact = session.waveStartShield - session.shield;
+    const reason = session.shield === 0 ? "基地护盾耗尽。" : "实际冲击 " + impact + "，超过本波上限 " + plan.limit + "。";
+    detail = "第 " + (session.complete + 1) + " 波防守失败。" + reason + " 下次试着给 " +
+      uncoveredZones(plan) + " 航段加火力。点已有机器人，再点空位就能免费移动。";
+  }
+  const allCleared = Object.keys(progress.strategy).length === missions.length;
+  const title = won ? (allCleared ? "20 关策略挑战全部完成！" : "基地安全！") : "再试一次，指挥官";
+  openDialog(title, (won ? '<p class="stars" aria-label="' + stars + ' 星">' + "★".repeat(stars) + "☆".repeat(3 - stars) + "</p>" : "") + "<p>" + detail + "</p>");
+  const buttons = document.createElement("div");
+  buttons.className = "action-row";
+  const next = document.createElement("button");
+  next.type = "button";
+  next.className = "primary";
+  next.textContent = won ? (final ? "打开图鉴" : "前往第 " + (session.index + 2) + " 关") : "重新布置";
+  next.addEventListener("click", () => {
+    if (won && final) openLogbook();
+    else goTo(won ? session.index + 1 : session.index);
+  });
+  const map = document.createElement("button");
+  map.type = "button";
+  map.textContent = "返回地图";
+  map.addEventListener("click", () => popup.close());
+  buttons.append(next, map);
+  dialogBody.append(buttons);
+}
+
+function goTo(index) {
+  beginMission(index);
+  window.scrollTo({ top:0, behavior:motion.matches ? "auto" : "smooth" });
+}
+
+function restartMission() {
+  const index = session.index;
+  if (isOver() || (session.phase === "prep" && !session.built.size && !session.complete && !session.scanned)) {
+    goTo(index);
+  } else {
+    confirmAction("重新布置这一关？", "会清空这一关的机器人工位和波次。获得的星星和图鉴会保留。", "重新开始", () => goTo(index));
+  }
+}
+
+function explainGame() {
+  openDialog("指挥官手册",
+    "<ol><li>看布防表。每块碎石经过指定航段的信标时，该段机器人合力拦截。火力达到要求就能挡住。</li>" +
+    "<li>选机器，再点航段里的「＋」。点已有机器再点空位可免费移动。升级火力加 2，启动费也加 1。</li>" +
+    "<li>发电和启动后的能量达到要求时，算出「库存 − 启动费」就能开波。布防有缺口时，也可以开波观察。实际冲击超出上限，或护盾耗尽，本次防守就失败。</li>" +
+    "<li>波次之间可以重排。花 25 能量修复最多 30 护盾，或扫描「✧」答题获得 25 能量。</li></ol>" +
+    '<p class="reveal">守完全部波次得 1 星。护盾还剩 65 或更多、答对扫描题，各加 1 星。' +
+    "你的最高星级和图鉴会保存在当前浏览器。机器人和碎石拦截规则属于游戏设定。</p>");
+}
+
+function trail(context, points) {
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) context.lineTo(point.x, point.y);
+}
+
+function circle(context, x, y, radius, color) {
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fillStyle = color;
+  context.fill();
+}
+
+function drawLandscape() {
+  const { chapter, map, index } = session;
+  let seed = 1949 + index * 121;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const background = terrain.createLinearGradient(0, 0, WIDTH * .6, HEIGHT);
+  background.addColorStop(0, chapter.sky);
+  background.addColorStop(1, chapter.land);
+  terrain.fillStyle = background;
+  terrain.fillRect(0, 0, WIDTH, HEIGHT);
+
+  for (let i = 0; i < 265; i += 1) {
+    const x = random() * WIDTH;
+    const y = random() * HEIGHT;
+    const radius = i % 21 === 0 ? 1.9 : .4 + random() * .75;
+    circle(terrain, x, y, radius, i % 21 === 0 ? chapter.line + "a6" : chapter.line + "36");
+  }
+  terrain.strokeStyle = chapter.line + "19";
+  terrain.lineWidth = 1;
+  for (let x = 0; x <= WIDTH; x += 24) {
+    terrain.beginPath();
+    terrain.moveTo(x, 0);
+    terrain.lineTo(x, HEIGHT);
+    terrain.stroke();
+  }
+  for (let y = 0; y <= HEIGHT; y += 24) {
+    terrain.beginPath();
+    terrain.moveTo(0, y);
+    terrain.lineTo(WIDTH, y);
+    terrain.stroke();
+  }
+  for (let i = 0; i < 30; i += 1) {
+    const x = random() * WIDTH;
+    const y = random() * HEIGHT;
+    const radius = 7 + random() * 18;
+    const depth = radius * .55;
+    terrain.beginPath();
+    terrain.ellipse(x, y, radius, depth, -.24, 0, Math.PI * 2);
+    terrain.fillStyle = "#0b122958";
+    terrain.fill();
+    terrain.strokeStyle = chapter.stone + "37";
+    terrain.lineWidth = 2;
+    terrain.stroke();
+    terrain.beginPath();
+    terrain.ellipse(x, y - 2, radius - 3, depth - 2, -.24, .2, Math.PI * .94);
+    terrain.strokeStyle = chapter.stone + "30";
+    terrain.stroke();
+  }
+  for (const y of [0, HEIGHT]) {
+    const sign = y ? -1 : 1;
+    terrain.fillStyle = chapter.stone + "27";
+    terrain.beginPath();
+    terrain.moveTo(0, y);
+    for (let x = 0; x <= WIDTH; x += 20) terrain.lineTo(x, y + sign * (9 + random() * 21));
+    terrain.lineTo(WIDTH, y);
+    terrain.closePath();
+    terrain.fill();
+  }
+  if (index >= 12 && index <= 15) {
+    terrain.strokeStyle = "#a2fbff4d";
+    terrain.lineWidth = 1.4;
+    trail(terrain, [{ x:0,y:209 }, { x:103,y:260 }, { x:199,y:194 }, { x:292,y:258 }, { x:398,y:188 }, { x:500,y:257 }, { x:641,y:178 }, { x:800,y:241 }]);
+    terrain.stroke();
+  }
+  terrain.lineCap = "round";
+  terrain.lineJoin = "round";
+  trail(terrain, map.path);
+  terrain.lineWidth = 52;
+  terrain.strokeStyle = "#0d132b83";
+  terrain.stroke();
+  terrain.lineWidth = 42;
+  terrain.strokeStyle = chapter.path;
+  terrain.stroke();
+  terrain.lineWidth = 34;
+  terrain.strokeStyle = chapter.land + "9c";
+  terrain.stroke();
+  terrain.save();
+  terrain.lineWidth = 2;
+  terrain.setLineDash([5, 9]);
+  terrain.strokeStyle = chapter.line + "ad";
+  terrain.stroke();
+  terrain.restore();
+
+  for (const { from, to } of map.segments) {
+    const x = (from.x + to.x) / 2;
+    const y = (from.y + to.y) / 2;
+    terrain.save();
+    terrain.translate(x, y);
+    terrain.rotate(Math.atan2(to.y - from.y, to.x - from.x));
+    terrain.fillStyle = chapter.path;
+    terrain.fillRect(-9, -9, 18, 18);
+    trail(terrain, [{ x:-3,y:-4 }, { x:2,y:0 }, { x:-3,y:4 }]);
+    terrain.strokeStyle = chapter.line;
+    terrain.stroke();
+    terrain.restore();
+  }
+  drawEndpoint(terrain, map.path[0], false);
+  drawEndpoint(terrain, map.path.at(-1), true);
+  map.gates.forEach((distance, i) => {
+    const { x, y } = positionOnPath(distance);
+    const zone = zones[i];
+    circle(terrain, x, y, 16, chapter.land);
+    terrain.strokeStyle = zone.color;
+    terrain.lineWidth = 2;
+    terrain.stroke();
+    terrain.fillStyle = zone.color;
+    terrain.font = "bold 17px system-ui";
+    terrain.textAlign = "center";
+    terrain.textBaseline = "middle";
+    terrain.fillText(zone.code, x, y + .5);
+  });
+}
+
+function hexagon(context, x, y, radius) {
+  context.beginPath();
+  for (let i = 0; i < 6; i += 1) {
+    const angle = i * Math.PI / 3;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (i === 0) context.moveTo(px, py);
+    else context.lineTo(px, py);
+  }
+  context.closePath();
+}
+
+function drawEndpoint(context, point, base) {
+  const { x, y } = point;
+  const mark = base ? "#9cf9e8" : "#ffadbb";
+  circle(context, x, y, 32, mark + "26");
+  hexagon(context, x, y, 25);
+  context.fillStyle = base ? "#21605e" : "#754259";
+  context.strokeStyle = mark;
+  context.lineWidth = 2;
+  context.fill();
+  context.stroke();
+  hexagon(context, x, y, 16);
+  context.lineWidth = 1;
+  context.stroke();
+  circle(context, x, y, 6, mark);
+  if (base) {
+    for (const offset of [-26, 26]) {
+      context.fillStyle = "#20394f";
+      context.fillRect(x + offset - 5, y - 7, 10, 14);
+      context.strokeRect(x + offset - 5, y - 7, 10, 14);
+    }
+  }
+}
+
+function drawRock(rock) {
+  const spec = debris[rock.type];
+  const { x, y } = rock.point;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rock.spin + (motion.matches ? 0 : rock.distance * .012));
+  ctx.beginPath();
+  for (let i = 0; i < 7; i += 1) {
+    const angle = i * 2 * Math.PI / 7;
+    const radius = spec.radius * [.84, .96, .73, 1, .9, .8, 1][i];
+    const px = Math.sin(angle) * radius;
+    const py = Math.cos(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = rock.frozen ? "#a7fff8" : spec.color;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#20233c";
+  ctx.stroke();
+  circle(ctx, -2, 3, spec.radius / 4, "#444a6b88");
+  ctx.restore();
+  if (rock.hp < rock.max) {
+    ctx.fillStyle = "#10182f";
+    ctx.fillRect(x - 10, y - spec.radius - 8, 20, 3);
+    ctx.fillStyle = "#9ffee1";
+    ctx.fillRect(x - 10, y - spec.radius - 8, 20 * Math.max(0, rock.hp / rock.max), 3);
+  }
+}
+
+function drawBoard() {
+  ctx.drawImage(landscape, 0, 0);
+  const bot = session.built.get(session.inspected);
+  if (bot && bot.type !== "solar" && session.phase === "prep") {
+    const zone = session.map.pads[bot.index].zone;
+    const origin = session.map.pads[bot.index];
+    const gate = positionOnPath(session.map.gates[zone]);
+    ctx.save();
+    ctx.setLineDash([5, 6]);
+    ctx.strokeStyle = zones[zone].color;
+    ctx.lineWidth = 2;
+    trail(ctx, [origin, gate]);
+    ctx.stroke();
+    ctx.restore();
+  }
+  for (const rock of session.rocks) drawRock(rock);
+  for (const effect of session.effects) {
+    if (effect.kind === "ray") {
+      ctx.globalAlpha = Math.min(1, effect.life / .14);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = effect.color;
+      trail(ctx, [effect.from, effect.to]);
+      ctx.stroke();
+    } else {
+      ctx.globalAlpha = Math.min(1, effect.life * 2);
+      ctx.fillStyle = effect.color;
+      ctx.textAlign = "center";
+      ctx.font = "bold 18px system-ui";
+      ctx.fillText(effect.text, effect.from.x, effect.from.y - 35 + effect.life * 17);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function bindControls() {
+  byId("start").addEventListener("click", () => {
+    switch (session.phase) {
+      case "prep": openWave(); break;
+      case "wave":
+        session.phase = "paused";
+        playSound("pause");
+        say("拦截已暂停。这一波结束后就能重新布置。");
+        render();
+        break;
+      case "paused":
+        session.phase = "wave";
+        playSound("resume");
+        say("继续拦截！观察碎石在哪个航段被挡住。");
+        render();
+        break;
+      case "lost": goTo(session.index); break;
+      case "won":
+        if (session.index + 1 === missions.length) openResult();
+        else goTo(session.index + 1);
+        break;
+    }
+  });
+  byId("speed").addEventListener("click", () => {
+    slow = !slow;
+    playSound("select");
+    render();
+  });
+  byId("repair").addEventListener("click", () => {
+    if (session.energy < REPAIR_COST || session.shield === 100 || session.phase !== "prep") return;
+    const healed = Math.min(30, 100 - session.shield);
+    session.shield += healed;
+    session.energy -= REPAIR_COST;
+    playSound("repair");
+    say("护盾 +" + healed + "。");
+    render();
+  });
+  byId("upgrade").addEventListener("click", () => {
+    const bot = session.built.get(session.inspected);
+    if (!bot || bot.level >= 3 || session.phase !== "prep") return;
+    const cost = upgradeCost(bot);
+    if (session.energy < cost) return;
+    session.energy -= cost;
+    bot.spent += cost;
+    bot.level += 1;
+    playSound("upgrade");
+    say(robots[bot.type].name + " 升到了 " + bot.level + " 级。");
+    render();
+  });
+  byId("recycle").addEventListener("click", () => {
+    const bot = session.built.get(session.inspected);
+    if (!bot || session.phase !== "prep") return;
+    const refund = Math.floor(bot.spent * .65);
+    session.energy += refund;
+    session.built.delete(session.inspected);
+    session.inspected = null;
+    playSound("recycle");
+    say("已回收机器人，返还 " + refund + " 能量。");
+    render();
+  });
+  byId("restart").addEventListener("click", restartMission);
+  byId("scan").addEventListener("click", openDiscovery);
+  byId("help").addEventListener("click", explainGame);
+  byId("archive").addEventListener("click", openLogbook);
+  byId("close").addEventListener("click", () => popup.close());
+  byId("jump").addEventListener("click", () => byId("route").scrollIntoView({ behavior:motion.matches ? "auto" : "smooth" }));
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && session.phase === "wave") {
+      session.phase = "paused";
+      say("拦截已暂停。准备好以后可以继续。");
+      render();
+    }
+  });
+}
+
+let previousFrame;
+function frame(now) {
+  const delta = previousFrame === undefined ? 0 : Math.min((now - previousFrame) / 1000, .05);
+  previousFrame = now;
+  if (session.phase === "wave" && !popup.open) {
+    tick(delta * (slow ? .6 : 1));
+    drawBoard();
+  }
+  requestAnimationFrame(frame);
+}
+
+setupRobotButtons();
+bindControls();
+bindSoundControls();
+const firstUnfinished = missions.findIndex((mission, index) => !progress.strategy[index] && unlocked(index));
+beginMission(firstUnfinished < 0 ? missions.length - 1 : firstUnfinished);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
